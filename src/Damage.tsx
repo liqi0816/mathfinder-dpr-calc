@@ -1,66 +1,50 @@
 import { Paper, Typography } from '@mui/material';
+import { Ace } from 'ace-builds';
 import React from 'react';
-import AceEditor from 'react-ace';
-import { Slide } from './components/Slide';
-import useId from '@mui/material/utils/useId';
+import { Column } from './components/Column';
 import { DiceAndNumberCommentMode } from './editor/DiceAndNumber';
+import { Editor, ReadonlyEditor } from './editor/Editor';
+import { iterateEditor } from './editor/util';
+import { NormalizedRow } from './state/calculator';
 
-export const AdditionalAttackBonus: React.VFC = () => {
-    const [value, setValue] = React.useState('');
-    const exampleId = useId();
-    const criticalEligibleId = useId();
-    const flatId = useId();
+export const Damage: React.VFC = () => {
+    const criticalEligibleEditor = React.useRef<Ace.Editor>();
+    const flatEditor = React.useRef<Ace.Editor>();
     return (
-        <Slide>
+        <Column>
             <Typography variant={'h4'}>Damage</Typography>
-            <Paper>
-                <Typography variant={'body1'}>List damage like this</Typography>
-                <AceEditor
-                    mode={DiceAndNumberCommentMode.mode}
-                    theme={'tomorrow'}
-                    name={exampleId}
-                    value={
-                        '1d8 Some damage description\n1 Weapon Focus\n-2 Rapid shot'
-                    }
-                    readOnly
-                    minLines={3}
-                    maxLines={3}
-                    fontSize={18}
-                    showPrintMargin={false}
-                    showGutter={false}
-                    highlightActiveLine={false}
-                    setOptions={{
-                        enableBasicAutocompletion: true,
-                        enableLiveAutocompletion: false,
-                        enableSnippets: false,
-                        showLineNumbers: false,
-                    }}
-                    width={'100%'}
-                    style={{ pointerEvents: 'none' }}
+            <Paper variant={'outlined'} sx={{ padding: 1 }}>
+                <Typography variant={'body1'}>Please list damages like this</Typography>
+                <ReadonlyEditor
+                    mode={DiceAndNumberCommentMode.instance}
+                    value={'d8 Some damage description\n2d6 + 2 Bane\n5 Strength Bonus\n10 Deadly Aim'}
                 />
             </Paper>
-            <Typography variant={'body1'} marginTop={1}>
-                We detected:{' '}
-            </Typography>
-            <AceEditor
-                mode={DiceAndNumberCommentMode.mode}
-                theme={'tomorrow'}
-                name={criticalEligibleId}
-                fontSize={18}
-                showPrintMargin={false}
-                showGutter={false}
-                setOptions={{
-                    enableBasicAutocompletion: true,
-                    enableLiveAutocompletion: false,
-                    enableSnippets: false,
-                    showLineNumbers: false,
-                }}
-                value={value}
-                onChange={setValue}
+            <Typography variant={'h5'}>Multiplies on critical</Typography>
+            <Typography variant={'body1'}>Power Attack, Enhancement, etc.</Typography>
+            <Editor
+                mode={DiceAndNumberCommentMode.instance}
+                onLoad={editor => (criticalEligibleEditor.current = editor)}
                 placeholder={'Please enter something here...'}
-                width={'100%'}
-                style={{ flexGrow: 1 }}
+                style={{ minHeight: 200, flexGrow: 1 }}
             />
-        </Slide>
+            <button
+                onClick={() => {
+                    if (!criticalEligibleEditor.current) return;
+                    const block = iterateEditor(criticalEligibleEditor.current.session);
+                    console.log(NormalizedRow.merge(NormalizedRow.fromBlock(block)).toString());
+                }}
+            >
+                test
+            </button>
+            <Typography variant={'h5'}>Does not multiply on critical</Typography>
+            <Typography variant={'body1'}>Sneak, Elemental, etc</Typography>
+            <Editor
+                mode={DiceAndNumberCommentMode.instance}
+                onLoad={editor => (flatEditor.current = editor)}
+                placeholder={'Please enter something here...'}
+                style={{ minHeight: 200, flexGrow: 1 }}
+            />
+        </Column>
     );
 };

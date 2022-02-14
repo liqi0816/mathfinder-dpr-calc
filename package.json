@@ -13,6 +13,7 @@
     "@types/react-dom": "^17.0.11",
     "ace-builds": "^1.4.14",
     "cross-env": "^7.0.3",
+    "nanoid": "^3.2.0",
     "react": "^17.0.2",
     "react-ace": "^9.5.0",
     "react-dom": "^17.0.2",

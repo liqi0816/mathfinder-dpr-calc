@@ -5,13 +5,10 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { BaseAttackBonus } from './BaseAttackBonus';
-
-import 'react-ace';
-import 'ace-builds/src-noconflict/mode-java';
-import 'ace-builds/src-noconflict/theme-github';
-import { AdditionalAttackBonus } from './AdditionalAttackBonus';
+import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
+import { Damage } from './Damage';
+import { ParserPreview } from './ParserPreview';
 
 const theme = createTheme();
 
@@ -22,7 +19,7 @@ const Root: React.VFC = () => {
             <Stack
                 direction={'column'}
                 flexWrap={'nowrap'}
-                sx={{ minHeight: '100vh', gap: 10 }}
+                sx={{ height: '100vh', gap: { md: 2 } }}
             >
                 <AppBar position={'relative'}>
                     <Toolbar>
@@ -38,14 +35,15 @@ const Root: React.VFC = () => {
                     justifyContent={'start'}
                     sx={{
                         overflowX: { xs: 'hidden', md: 'auto' },
-                        paddingX: { xs: 0, md: 10 },
+                        paddingX: { xs: 1, md: 10 },
                         flexGrow: 1,
-                        gap: 1,
+                        gap: 2,
                     }}
                 >
-                    <BaseAttackBonus />
-                    <AdditionalAttackBonus />
+                    <AttackBonus />
+                    <Damage />
                     <CriticalHit />
+                    <ParserPreview />
                 </Stack>
             </Stack>
         </ThemeProvider>

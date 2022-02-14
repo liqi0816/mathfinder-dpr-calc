@@ -12,14 +12,6 @@ export interface RawInput {
     };
 }
 
-export function parseListOfNumbers(input: string): number[] {
-    return input
-        .split('\n')
-        .map(s =>
-            s.match(/^(?:always|infinity)/i) ? Infinity : parseInt(s, 10)
-        );
-}
-
 export interface Damage {
     criticalEligible: number;
     flatBonus: number;
