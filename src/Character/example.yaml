@@ -1,0 +1,24 @@
+base attack bonus: 17
+additional attack bonus: 6
+critical hit:
+    multiplier: 3
+    range: 19
+    confirmation bonus: 6
+damage:
+    normal: 2d6 + 3
+    flat bonus: d6
+
+bab17:
+    hit: base attack bonus + additional attack bonus
+    damage: normal + flat bonus
+    critical damage:
+        range * damage
+bab12:
+    hit: bab17 - 5
+    damage: bab17
+bab7:
+    hit: bab12 - 5
+    damage: bab12
+bab2:
+    hit: bab2 - 5
+    damage: bab2

@@ -1,25 +1,28 @@
-import 'ace-builds';
-import { Mode as TextMode } from 'ace-builds/src-noconflict/mode-text';
+import * as ace from 'ace-builds';
+import { BaseEditorMode } from './BaseMode';
+import { typedRules } from './util';
 
-class SimpleNumberCommentRules extends new TextMode().HighlightRules {
-    $rules = {
-        start: [
-            { regex: /(?=[d\d])/, next: 'spec' },
-            { regex: /(?:)/, next: 'middle' },
-        ],
-        middle: [
-            { token: 'keyword.operator', regex: /[+-]/, next: 'spec' },
-            { token: 'comment.line', regex: /\S/, next: 'comment' },
-        ],
-        spec: [
-            { token: 'constant.numeric', regex: /\d+/, next: 'middle' },
-        ],
-        comment: [{ token: 'comment.line', regex: /.*$/, next: 'start' }],
+const TextHighlightRules = ace.require('ace/mode/text_highlight_rules').TextHighlightRules;
+
+export class SimpleNumberCommentMode extends BaseEditorMode {
+    HighlightRules = class extends TextHighlightRules {
+        $rules = typedRules({
+            start: [
+                { regex: /(?=\d)/, next: 'term' },
+                { regex: /(?:)/, next: 'operator' },
+            ],
+            operator: [
+                { regex: /[+-]/, token: 'keyword.operator', next: 'term' },
+                { regex: /(?=\S)/, token: 'comment.line', next: 'comment' },
+                { regex: /\n/, next: 'start' },
+            ],
+            term: [
+                { regex: /\d+/, token: 'constant.numeric', next: 'operator' },
+                { regex: /\n/, token: 'constant.numeric', next: 'start' },
+            ],
+            comment: [{ regex: /.*/, token: 'comment.line', next: 'start' }],
+        });
     };
-}
-
-export class SimpleNumberCommentMode extends TextMode {
-    HighlightRules = SimpleNumberCommentRules;
 
     static instance = new SimpleNumberCommentMode();
 }

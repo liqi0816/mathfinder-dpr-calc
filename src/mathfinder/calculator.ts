@@ -83,7 +83,6 @@ export class NormalizedRow extends NormalizedCalculation {
                 }
             } else if (type === 'entity.name.function') {
                 if (value.startsWith('d')) {
-                    buffer.number = 1;
                     buffer.diceSize = Number(value.slice(1));
                 }
             } else if (token.type === 'comment.line') {
@@ -99,6 +98,6 @@ export class NormalizedRow extends NormalizedCalculation {
     }
 }
 
-export function calculateBlock(block: Iterable<Iterable<Ace.Token>>) {
-    return NormalizedRow.merge(NormalizedRow.fromBlock(block)).toAverage();
+export function parseBlock(block: Iterable<Iterable<Ace.Token>>) {
+    return NormalizedRow.merge(NormalizedRow.fromBlock(block));
 }

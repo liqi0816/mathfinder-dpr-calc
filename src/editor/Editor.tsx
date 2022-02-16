@@ -1,24 +1,38 @@
-import AceEditor from 'react-ace'; // important! must be the first import
+import 'ace-builds';
+import type { Ace } from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-text';
 import 'ace-builds/src-noconflict/theme-tomorrow';
-import { nanoid } from 'nanoid/non-secure';
+import uniqueId from 'lodash/uniqueId';
 import React from 'react';
+import AceEditor from 'react-ace';
 
-export class Editor extends AceEditor {
-    public static defaultProps: typeof AceEditor.defaultProps = {
-        ...AceEditor.defaultProps,
-        theme: 'tomorrow',
-        fontSize: 18,
-        showPrintMargin: false,
-        showGutter: false,
-        setOptions: { showLineNumbers: false },
-        width: '100%',
-        height: '200px',
-    };
+interface TokenizerUpdateEvent {
+    first: number;
+    last: number;
+    session: Ace.EditSession;
+}
 
-    constructor(props: React.ComponentProps<typeof AceEditor>) {
-        super(props.name ? props : { ...props, name: nanoid(10) });
-    }
+declare class Extender extends React.Component<{ onTokenizerUpdate?: (event: TokenizerUpdateEvent) => void }> {}
+
+export class Editor extends (AceEditor as typeof Extender & typeof AceEditor & (new (..._: any) => Extender & AceEditor)) {
+    public static defaultProps: typeof AceEditor.defaultProps = Object.defineProperties(
+        {
+            ...AceEditor.defaultProps,
+            theme: 'tomorrow',
+            fontSize: 18,
+            showPrintMargin: false,
+            showGutter: false,
+            setOptions: { showLineNumbers: false },
+            width: '100%',
+            height: '200px',
+        },
+        {
+            name: {
+                enumerable: true,
+                get: () => uniqueId('editor'),
+            },
+        }
+    );
 
     componentDidMount() {
         super.componentDidMount();
@@ -26,6 +40,14 @@ export class Editor extends AceEditor {
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1220041
         const observer = new ResizeObserver(() => this.editor?.resize());
         observer.observe(this.refEditor);
+        // attach tokenizerUpdate to current and future session
+        const attachSession = ({ session }: { session: Ace.EditSession }) => {
+            session.on('tokenizerUpdate', ({ data: { first, last } }) => {
+                this.props.onTokenizerUpdate?.({ first, last, session });
+            });
+        };
+        this.editor.on('changeSession', attachSession);
+        attachSession(this.editor);
     }
 }
 
