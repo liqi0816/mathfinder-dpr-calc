@@ -49,8 +49,8 @@ export const Character: React.VFC = () => {
                 'extra bonus': '',
             },
             'critical hit': {
-                multiplier: '',
-                range: '',
+                multiplier: '2',
+                range: '20',
                 'confirmation bonus': '',
             },
             script: '',
@@ -68,44 +68,39 @@ export const Character: React.VFC = () => {
             justifyContent={'start'}
             sx={{
                 overflowX: { xs: 'hidden', md: 'auto' },
+                overflowY: 'auto',
                 paddingX: { xs: 1, md: 10 },
+                paddingTop: { md: 2 },
                 flexGrow: 1,
                 gap: 2,
             }}
         >
             <AttackBonus
                 value={state.rawInput}
-                onChange={React.useCallback(
-                    value =>
-                        setState(draft => {
-                            draft.rawInput['base attack bonus'] = value['base attack bonus'];
-                            draft.rawInput['additional attack bonus'] = value['additional attack bonus'];
-                        }),
-                    [setState]
-                )}
-                onParsed={React.useCallback(
-                    value =>
-                        setState(draft => {
-                            draft.parsed['base attack bonus'] = value['base attack bonus'];
-                            draft.parsed['additional attack bonus'] = value['additional attack bonus'];
-                        }),
-                    [setState]
-                )}
+                onChange={value =>
+                    setState(draft => {
+                        draft.rawInput['base attack bonus'] = value['base attack bonus'];
+                        draft.rawInput['additional attack bonus'] = value['additional attack bonus'];
+                    })
+                }
+                onParsed={value =>
+                    setState(draft => {
+                        draft.parsed['base attack bonus'] = value['base attack bonus'];
+                        draft.parsed['additional attack bonus'] = value['additional attack bonus'];
+                    })
+                }
             />
             <Damage
                 value={state.rawInput.damage}
-                onChange={React.useCallback(value => setState(draft => void (draft.rawInput.damage = value)), [setState])}
-                onParsed={React.useCallback(value => setState(draft => void (draft.parsed.damage = value)), [setState])}
+                onChange={value => setState(draft => void (draft.rawInput.damage = value))}
+                onParsed={value => setState(draft => void (draft.parsed.damage = value))}
             />
             <CriticalHit
                 value={state.rawInput['critical hit']}
-                onChange={React.useCallback(
-                    value => setState(draft => void (draft.rawInput['critical hit'] = value)),
-                    [setState]
-                )}
-                onParsed={React.useCallback(value => setState(draft => void (draft.parsed['critical hit'] = value)), [setState])}
+                onChange={value => setState(draft => void (draft.rawInput['critical hit'] = value))}
+                onParsed={value => setState(draft => void (draft.parsed['critical hit'] = value))}
             />
-            {!state.rawInput.script && <ParserPreview parsed={state.parsed} />}
+            {!state.rawInput.script && <ParserPreview parsed={state.parsed} onTemplateCreated={template => {}} />}
         </Stack>
     );
 };

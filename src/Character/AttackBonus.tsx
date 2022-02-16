@@ -15,12 +15,7 @@ interface Props {
 
 export const AttackBonus: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const [parsed, setParsed] = React.useState<Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>>(
-        {}
-    );
-    React.useEffect(() => {
-        onParsed(parsed);
-    }, [parsed, onParsed]);
+    const parsed = React.useRef<Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>>({});
     return (
         <Column>
             <Typography variant={'h4'}>Attack Bonus</Typography>
@@ -42,7 +37,7 @@ export const AttackBonus: React.VFC<Props> = props => {
                 value={value['base attack bonus']}
                 onChange={base => onChange({ ...value, 'base attack bonus': base })}
                 onTokenizerUpdate={editor =>
-                    setParsed(parsed => ({ ...parsed, 'base attack bonus': parseBlock(iterateEditor(editor)) }))
+                    onParsed((parsed.current = { ...parsed.current, 'base attack bonus': parseBlock(iterateEditor(editor)) }))
                 }
             />
             <Typography variant={'h5'}>Additional Attack Bonus</Typography>
@@ -60,7 +55,9 @@ export const AttackBonus: React.VFC<Props> = props => {
                 value={value['additional attack bonus']}
                 onChange={aditional => onChange({ ...value, 'additional attack bonus': aditional })}
                 onTokenizerUpdate={editor =>
-                    setParsed(parsed => ({ ...parsed, 'additional attack bonus': parseBlock(iterateEditor(editor)) }))
+                    onParsed(
+                        (parsed.current = { ...parsed.current, 'additional attack bonus': parseBlock(iterateEditor(editor)) })
+                    )
                 }
             />
         </Column>

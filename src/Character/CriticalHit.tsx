@@ -11,14 +11,16 @@ interface Props {
 
 export const CriticalHit: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
+    const onParsedRef = React.useRef<Props['onParsed']>(onParsed);
+    onParsedRef.current = onParsed;
     React.useEffect(
         () =>
-            onParsed({
+            onParsedRef.current({
                 multiplier: Number(value.multiplier),
                 range: Number(value.range),
                 'confirmation bonus': Number(value['confirmation bonus']),
             }),
-        [onParsed, value]
+        [value]
     );
     return (
         <Column gap={2}>

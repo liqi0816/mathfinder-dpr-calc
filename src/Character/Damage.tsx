@@ -15,10 +15,7 @@ interface Props {
 
 export const Damage: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const [parsed, setParsed] = React.useState<CharacterState['parsed']['damage']>({});
-    React.useEffect(() => {
-        onParsed(parsed);
-    }, [parsed, onParsed]);
+    const parsed = React.useRef<CharacterState['parsed']['damage']>({});
     return (
         <Column>
             <Typography variant={'h4'}>Damage</Typography>
@@ -37,7 +34,9 @@ export const Damage: React.VFC<Props> = props => {
                 style={{ minHeight: 200, flexGrow: 1 }}
                 value={value.normal}
                 onChange={normal => onChange({ ...value, normal })}
-                onTokenizerUpdate={editor => setParsed(parsed => ({ ...parsed, normal: parseBlock(iterateEditor(editor)) }))}
+                onTokenizerUpdate={editor =>
+                    onParsed((parsed.current = { ...parsed.current, normal: parseBlock(iterateEditor(editor)) }))
+                }
             />
             <Typography variant={'h5'}>Does not multiply on critical</Typography>
             <Typography variant={'body1'}>Sneak, Elemental, etc</Typography>
@@ -48,7 +47,7 @@ export const Damage: React.VFC<Props> = props => {
                 value={value['extra bonus']}
                 onChange={extra => onChange({ ...value, 'extra bonus': extra })}
                 onTokenizerUpdate={editor =>
-                    setParsed(parsed => ({ ...parsed, 'extra bonus': parseBlock(iterateEditor(editor)) }))
+                    onParsed((parsed.current = { ...parsed.current, 'extra bonus': parseBlock(iterateEditor(editor)) }))
                 }
             />
         </Column>

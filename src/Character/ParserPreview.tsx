@@ -18,12 +18,38 @@ import { NormalizedCalculation } from '../mathfinder/calculator';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 
+export interface Template {
+    'base attack bonus': NonNullable<CharacterState['parsed']['base attack bonus']>;
+    'additional attack bonus': NonNullable<CharacterState['parsed']['additional attack bonus']>;
+    damage: Required<CharacterState['parsed']['damage']>;
+    'critical hit': Required<CharacterState['parsed']['critical hit']>;
+}
+
+const toTemplate = (parsed: CharacterState['parsed']): Template | undefined => {
+    if (!parsed['base attack bonus']?.toAverage()) return;
+    if (!parsed.damage['normal']?.toAverage() && !parsed.damage['extra bonus']?.toAverage()) return;
+    return {
+        'base attack bonus': parsed['base attack bonus'],
+        'additional attack bonus': parsed['additional attack bonus'] ?? new NormalizedCalculation(),
+        damage: {
+            normal: parsed.damage['normal'] ?? new NormalizedCalculation(),
+            'extra bonus': parsed.damage['extra bonus'] ?? new NormalizedCalculation(),
+        },
+        'critical hit': {
+            multiplier: parsed['critical hit'].multiplier ?? 2,
+            range: parsed['critical hit'].range ?? 20,
+            'confirmation bonus': parsed['critical hit']['confirmation bonus'] ?? 0,
+        },
+    };
+};
+
 interface Props {
     parsed: CharacterState['parsed'];
+    onTemplateCreated: (template: Template) => void;
 }
 
 export const ParserPreview: React.VFC<Props> = props => {
-    const { parsed } = props;
+    const { parsed, onTemplateCreated } = props;
     const { damage } = parsed;
     const totalDamage = React.useMemo(
         () => NormalizedCalculation.merge(compact([damage['normal'], damage['extra bonus']])),
@@ -40,6 +66,7 @@ export const ParserPreview: React.VFC<Props> = props => {
         }
         return attackBonuses;
     }, [base, additional]);
+    const template = React.useMemo(() => toTemplate(parsed), [parsed]);
     return (
         <Column>
             <Typography variant={'h4'}>Preview</Typography>
@@ -79,31 +106,46 @@ export const ParserPreview: React.VFC<Props> = props => {
             <List dense>
                 <ListItem>
                     <Typography variant={'body1'}>
-                        {'Critical Hit: '}
-                        {[
-                            !!parsed['critical hit']['multiplier'] && [
-                                <Typography color={'primary.main'} component={'span'} key={'multiplier'}>
+                        Critical Hit:
+                        {!!parsed['critical hit']['multiplier'] && (
+                            <>
+                                {' '}
+                                <Typography color={'primary.main'} component={'span'}>
                                     x{parsed['critical hit']['multiplier']}
-                                </Typography>,
-                                ' ',
-                            ],
-                            !!parsed['critical hit']['range'] && [
-                                <Typography color={'secondary.main'} component={'span'} key={'range'}>
+                                </Typography>
+                            </>
+                        )}
+                        {!!parsed['critical hit']['range'] && (
+                            <>
+                                {' '}
+                                <Typography color={'secondary.main'} component={'span'}>
                                     {clamp((21 - parsed['critical hit']['range']) * 5, 5, 95)}%
-                                </Typography>,
-                                ' ',
-                            ],
-                            !!parsed['critical hit']['confirmation bonus'] && (
-                                <Typography color={'secondary.main'} component={'span'} key={'confirmation bonus'}>
+                                </Typography>
+                            </>
+                        )}
+                        {!!parsed['critical hit']['confirmation bonus'] && (
+                            <>
+                                {' '}
+                                <Typography color={'secondary.main'} component={'span'}>
                                     confirmation{parsed['critical hit']['confirmation bonus'] > 0 ? '+' : '-'}
                                     {Math.abs(parsed['critical hit']['confirmation bonus'])}
                                 </Typography>
-                            ),
-                        ]}
+                            </>
+                        )}
+                        {!Object.values(parsed['critical hit']).some(Boolean) && (
+                            <>
+                                {' '}
+                                <Typography color={'primary.main'} component={'span'}>
+                                    pending...
+                                </Typography>
+                            </>
+                        )}
                     </Typography>
                 </ListItem>
             </List>
-            <Button variant={'contained'}>Create Template</Button>
+            <Button variant={'contained'} disabled={!template} onClick={() => template && onTemplateCreated(template)}>
+                Create Template
+            </Button>
         </Column>
     );
 };
