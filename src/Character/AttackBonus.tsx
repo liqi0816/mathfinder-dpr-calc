@@ -1,25 +1,26 @@
 import { Paper, Typography } from '@mui/material';
-import { Ace } from 'ace-builds';
 import React from 'react';
-import { Column } from './components/Column';
 import { Editor, ReadonlyEditor } from '../editor/Editor';
 import { SimpleNumberCommentMode } from '../editor/SimpleNumber';
-import { CharacterState } from './Character';
-import { parseBlock } from '../mathfinder/calculator';
 import { iterateEditor } from '../editor/util';
+import { parseBlock } from '../mathfinder/calculator';
+import { CharacterState } from './Character';
+import { Column } from './components/Column';
 
 interface Props {
-    value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'aditional attack bonus'>;
-    onChange: (value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'aditional attack bonus'>) => void;
-    onParsed: (parsed: Pick<CharacterState['parsed'], 'base attack bonus' | 'aditional attack bonus'>) => void;
+    value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'additional attack bonus'>;
+    onChange: (value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'additional attack bonus'>) => void;
+    onParsed: (parsed: Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>) => void;
 }
 
 export const AttackBonus: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const [parsed, setParsed] = React.useState<Pick<CharacterState['parsed'], 'base attack bonus' | 'aditional attack bonus'>>(
+    const [parsed, setParsed] = React.useState<Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>>(
         {}
     );
-    React.useEffect(() => onParsed(parsed), [parsed, onParsed]);
+    React.useEffect(() => {
+        onParsed(parsed);
+    }, [parsed, onParsed]);
     return (
         <Column>
             <Typography variant={'h4'}>Attack Bonus</Typography>
@@ -56,10 +57,10 @@ export const AttackBonus: React.VFC<Props> = props => {
                 mode={SimpleNumberCommentMode.instance}
                 placeholder={'Please enter something here...'}
                 style={{ minHeight: 200, flexGrow: 1 }}
-                value={value['aditional attack bonus']}
-                onChange={aditional => onChange({ ...value, 'aditional attack bonus': aditional })}
+                value={value['additional attack bonus']}
+                onChange={aditional => onChange({ ...value, 'additional attack bonus': aditional })}
                 onTokenizerUpdate={editor =>
-                    setParsed(parsed => ({ ...parsed, 'aditional attack bonus': parseBlock(iterateEditor(editor)) }))
+                    setParsed(parsed => ({ ...parsed, 'additional attack bonus': parseBlock(iterateEditor(editor)) }))
                 }
             />
         </Column>

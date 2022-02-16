@@ -99,5 +99,5 @@ export class NormalizedRow extends NormalizedCalculation {
 }
 
 export function parseBlock(block: Iterable<Iterable<Ace.Token>>) {
-    return NormalizedRow.merge(NormalizedRow.fromBlock(block));
+    return NormalizedCalculation.merge(NormalizedRow.fromBlock(block));
 }

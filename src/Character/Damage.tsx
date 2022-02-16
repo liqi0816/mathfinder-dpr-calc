@@ -16,7 +16,9 @@ interface Props {
 export const Damage: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
     const [parsed, setParsed] = React.useState<CharacterState['parsed']['damage']>({});
-    React.useEffect(() => onParsed(parsed), [parsed, onParsed]);
+    React.useEffect(() => {
+        onParsed(parsed);
+    }, [parsed, onParsed]);
     return (
         <Column>
             <Typography variant={'h4'}>Damage</Typography>

@@ -11,8 +11,15 @@ interface Props {
 
 export const CriticalHit: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const [parsed, setParsed] = React.useState<CharacterState['parsed']['critical hit']>({});
-    React.useEffect(() => onParsed(parsed), [parsed, onParsed]);
+    React.useEffect(
+        () =>
+            onParsed({
+                multiplier: Number(value.multiplier),
+                range: Number(value.range),
+                'confirmation bonus': Number(value['confirmation bonus']),
+            }),
+        [onParsed, value]
+    );
     return (
         <Column gap={2}>
             <Typography variant={'h4'}>Critical Hit</Typography>

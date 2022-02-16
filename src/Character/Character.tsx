@@ -11,7 +11,7 @@ import { ParserPreview } from './ParserPreview';
 export interface CharacterState {
     rawInput: {
         'base attack bonus': string;
-        'aditional attack bonus': string;
+        'additional attack bonus': string;
         damage: {
             normal: string;
             'extra bonus': string;
@@ -25,7 +25,7 @@ export interface CharacterState {
     };
     parsed: {
         'base attack bonus'?: NormalizedCalculation;
-        'aditional attack bonus'?: NormalizedCalculation;
+        'additional attack bonus'?: NormalizedCalculation;
         damage: {
             normal?: NormalizedCalculation;
             'extra bonus'?: NormalizedCalculation;
@@ -43,7 +43,7 @@ export const Character: React.VFC = () => {
     const [state, setState] = useImmer<CharacterState>({
         rawInput: {
             'base attack bonus': '',
-            'aditional attack bonus': '',
+            'additional attack bonus': '',
             damage: {
                 normal: '',
                 'extra bonus': '',
@@ -75,28 +75,35 @@ export const Character: React.VFC = () => {
         >
             <AttackBonus
                 value={state.rawInput}
-                onChange={value =>
-                    setState(draft => {
-                        draft.rawInput['base attack bonus'] = value['base attack bonus'];
-                        draft.rawInput['aditional attack bonus'] = value['aditional attack bonus'];
-                    })
-                }
-                onParsed={value =>
-                    setState(draft => {
-                        draft.parsed['base attack bonus'] = value['base attack bonus'];
-                        draft.parsed['aditional attack bonus'] = value['aditional attack bonus'];
-                    })
-                }
+                onChange={React.useCallback(
+                    value =>
+                        setState(draft => {
+                            draft.rawInput['base attack bonus'] = value['base attack bonus'];
+                            draft.rawInput['additional attack bonus'] = value['additional attack bonus'];
+                        }),
+                    [setState]
+                )}
+                onParsed={React.useCallback(
+                    value =>
+                        setState(draft => {
+                            draft.parsed['base attack bonus'] = value['base attack bonus'];
+                            draft.parsed['additional attack bonus'] = value['additional attack bonus'];
+                        }),
+                    [setState]
+                )}
             />
             <Damage
                 value={state.rawInput.damage}
-                onChange={value => setState(draft => void (draft.rawInput.damage = value))}
-                onParsed={value => setState(draft => void (draft.parsed.damage = value))}
+                onChange={React.useCallback(value => setState(draft => void (draft.rawInput.damage = value)), [setState])}
+                onParsed={React.useCallback(value => setState(draft => void (draft.parsed.damage = value)), [setState])}
             />
             <CriticalHit
                 value={state.rawInput['critical hit']}
-                onChange={value => setState(draft => void (draft.rawInput['critical hit'] = value))}
-                onParsed={value => setState(draft => void (draft.parsed['critical hit'] = value))}
+                onChange={React.useCallback(
+                    value => setState(draft => void (draft.rawInput['critical hit'] = value)),
+                    [setState]
+                )}
+                onParsed={React.useCallback(value => setState(draft => void (draft.parsed['critical hit'] = value)), [setState])}
             />
             {!state.rawInput.script && <ParserPreview parsed={state.parsed} />}
         </Stack>
