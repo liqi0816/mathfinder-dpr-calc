@@ -13,7 +13,7 @@ const Root: React.VFC = () => {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Stack direction={'column'} flexWrap={'nowrap'} sx={{ height: '100vh' }}>
+            <Stack direction={'column'} flexWrap={'nowrap'} minHeight={'100vh'}>
                 <AppBar position={'relative'}>
                     <Toolbar>
                         <Typography variant={'h6'} color={'inherit'} noWrap>

@@ -11,8 +11,7 @@ damage:
 bab17:
     hit: base attack bonus + additional attack bonus
     damage: normal + flat bonus
-    critical damage:
-        range * damage
+    critical damage: range * damage
 bab12:
     hit: bab17 - 5
     damage: bab17

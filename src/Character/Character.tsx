@@ -1,12 +1,15 @@
 import { Stack } from '@mui/material';
+import yaml from 'js-yaml';
+import range from 'lodash/range';
 import React from 'react';
 import { useImmer } from 'use-immer';
-import { NormalizedCalculation } from '../mathfinder/calculator';
-import { NormalizedSequence } from '../mathfinder/squence';
+import { MathfinderPolynomial } from '../mathfinder/calculator';
+import { castMathfinderTemplate, MathfinderTemplate, MathfinderTurn } from '../mathfinder/squence';
 import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
 import { Damage } from './Damage';
 import { ParserPreview } from './ParserPreview';
+import { Script } from './Script';
 
 export interface CharacterState {
     rawInput: {
@@ -24,20 +27,46 @@ export interface CharacterState {
         script: string;
     };
     parsed: {
-        'base attack bonus'?: NormalizedCalculation;
-        'additional attack bonus'?: NormalizedCalculation;
-        damage: {
-            normal?: NormalizedCalculation;
-            'extra bonus'?: NormalizedCalculation;
+        'base attack bonus'?: MathfinderPolynomial;
+        'additional attack bonus'?: MathfinderPolynomial;
+        damage?: {
+            normal?: MathfinderPolynomial;
+            'extra bonus'?: MathfinderPolynomial;
         };
-        'critical hit': {
+        'critical hit'?: {
             multiplier?: number;
             range?: number;
             'confirmation bonus'?: number;
         };
-        script?: NormalizedSequence;
+        script?: MathfinderTurn;
     };
 }
+
+export interface CharacterScreenOption {
+    recalculateBAB: boolean;
+    expandStats: boolean;
+}
+
+const genScriptTextFromTemplate = (template: MathfinderTemplate): string => {
+    const baseValue = template['base attack bonus'].toAverage();
+    return yaml.dump(
+        Object.fromEntries([
+            [
+                `bab${baseValue}`,
+                {
+                    'hit chance': 'base attack bonus + additional attack bonus',
+                    damage: 'normal + extra bonus',
+                },
+            ],
+            ...range(baseValue - 5, 0, -5).map(value => [
+                `bab${value}`,
+                {
+                    'hit chance': `bab${value + 5} - 5`,
+                },
+            ]),
+        ])
+    );
+};
 
 export const Character: React.VFC = () => {
     const [state, setState] = useImmer<CharacterState>({
@@ -55,11 +84,13 @@ export const Character: React.VFC = () => {
             },
             script: '',
         },
-        parsed: {
-            damage: {},
-            'critical hit': {},
-        },
+        parsed: {},
     });
+    const [option, setOption] = useImmer<CharacterScreenOption>({
+        recalculateBAB: false,
+        expandStats: false,
+    });
+    const template = React.useMemo(() => castMathfinderTemplate(state.parsed), [state.parsed]);
     return (
         <Stack
             component={'main'}
@@ -100,7 +131,24 @@ export const Character: React.VFC = () => {
                 onChange={value => setState(draft => void (draft.rawInput['critical hit'] = value))}
                 onParsed={value => setState(draft => void (draft.parsed['critical hit'] = value))}
             />
-            {!state.rawInput.script && <ParserPreview parsed={state.parsed} onTemplateCreated={template => {}} />}
+            {!state.rawInput.script && (
+                <ParserPreview
+                    parsed={state.parsed}
+                    template={template}
+                    onTemplateConfirmed={template =>
+                        setState(draft => void (draft.rawInput['script'] = genScriptTextFromTemplate(template)))
+                    }
+                />
+            )}
+            {state.rawInput.script && (
+                <Script
+                    value={state.rawInput.script}
+                    onChange={value => setState(draft => void (draft.rawInput.script = value))}
+                    onParsed={value => setState(draft => void (draft.parsed.script = value))}
+                    option={option}
+                    setOption={setOption}
+                />
+            )}
         </Stack>
     );
 };

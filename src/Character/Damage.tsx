@@ -26,7 +26,7 @@ export const Damage: React.VFC<Props> = props => {
                     value={'d8 Some damage description\n2d6 + 2 Bane\n5 Strength Bonus\n10 Deadly Aim'}
                 />
             </Paper>
-            <Typography variant={'h5'}>Multiplies on critical</Typography>
+            <Typography variant={'h5'}>Multiplies on Critical</Typography>
             <Typography variant={'body1'}>Power Attack, Enhancement, etc.</Typography>
             <Editor
                 mode={DiceAndNumberCommentMode.instance}
@@ -38,7 +38,7 @@ export const Damage: React.VFC<Props> = props => {
                     onParsed((parsed.current = { ...parsed.current, normal: parseBlock(iterateEditor(editor)) }))
                 }
             />
-            <Typography variant={'h5'}>Does not multiply on critical</Typography>
+            <Typography variant={'h5'}>Does Not Multiply on Critical</Typography>
             <Typography variant={'body1'}>Sneak, Elemental, etc</Typography>
             <Editor
                 mode={DiceAndNumberCommentMode.instance}

@@ -12,9 +12,11 @@ interface TokenizerUpdateEvent {
     session: Ace.EditSession;
 }
 
-declare class Extender extends React.Component<{ onTokenizerUpdate?: (event: TokenizerUpdateEvent) => void }> {}
+declare class MonkeyPatchExtender extends React.Component<{ onTokenizerUpdate?: (event: TokenizerUpdateEvent) => void }> {}
 
-export class Editor extends (AceEditor as typeof Extender & typeof AceEditor & (new (..._: any) => Extender & AceEditor)) {
+export class Editor extends (AceEditor as typeof MonkeyPatchExtender &
+    typeof AceEditor &
+    (new (..._: any) => MonkeyPatchExtender & AceEditor)) {
     public static defaultProps: typeof AceEditor.defaultProps = Object.defineProperties(
         {
             ...AceEditor.defaultProps,

@@ -1,6 +1,6 @@
 import * as ace from 'ace-builds';
 import { BaseEditorMode } from './BaseMode';
-import { typedRules } from './util';
+import { TokenType, typedRules } from './util';
 
 const TextHighlightRules = ace.require('ace/mode/text_highlight_rules').TextHighlightRules;
 
@@ -12,20 +12,16 @@ export class DiceAndNumberCommentMode extends BaseEditorMode {
                 { regex: /(?:)/, next: 'operator' },
             ],
             operator: [
-                { regex: /[+-]/, token: 'keyword.operator', next: 'term' },
-                { regex: /(?=\S)/, token: 'comment.line', next: 'comment' },
+                { regex: /[+-]/, token: TokenType.operator, next: 'term' },
+                { regex: /(?=\S)/, token: TokenType.comment, next: 'comment' },
                 { regex: /\n/, next: 'start' },
             ],
             term: [
-                {
-                    regex: /(\d*)(d\d+)/,
-                    token: ['constant.numeric', 'entity.name.function'],
-                    next: 'operator',
-                },
-                { regex: /\d+/, token: 'constant.numeric', next: 'operator' },
+                { regex: /(\d*)(d\d+)/, token: [TokenType.numeric, TokenType.func], next: 'operator' },
+                { regex: /\d+/, token: TokenType.numeric, next: 'operator' },
                 { regex: /\n/, next: 'start' },
             ],
-            comment: [{ regex: /.*/, token: 'comment.line', next: 'start' }],
+            comment: [{ regex: /.*/, token: TokenType.comment, next: 'start' }],
         });
     };
 

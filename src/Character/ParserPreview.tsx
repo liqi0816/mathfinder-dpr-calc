@@ -14,59 +14,29 @@ import {
 import clamp from 'lodash/clamp';
 import compact from 'lodash/compact';
 import React from 'react';
-import { NormalizedCalculation } from '../mathfinder/calculator';
-import { CharacterState } from './Character';
+import { MathfinderPolynomial } from '../mathfinder/calculator';
+import { CharacterState, CharacterScriptTemplate } from './Character';
 import { Column } from './components/Column';
-
-export interface Template {
-    'base attack bonus': NonNullable<CharacterState['parsed']['base attack bonus']>;
-    'additional attack bonus': NonNullable<CharacterState['parsed']['additional attack bonus']>;
-    damage: Required<CharacterState['parsed']['damage']>;
-    'critical hit': Required<CharacterState['parsed']['critical hit']>;
-}
-
-const toTemplate = (parsed: CharacterState['parsed']): Template | undefined => {
-    if (!parsed['base attack bonus']?.toAverage()) return;
-    if (!parsed.damage['normal']?.toAverage() && !parsed.damage['extra bonus']?.toAverage()) return;
-    return {
-        'base attack bonus': parsed['base attack bonus'],
-        'additional attack bonus': parsed['additional attack bonus'] ?? new NormalizedCalculation(),
-        damage: {
-            normal: parsed.damage['normal'] ?? new NormalizedCalculation(),
-            'extra bonus': parsed.damage['extra bonus'] ?? new NormalizedCalculation(),
-        },
-        'critical hit': {
-            multiplier: parsed['critical hit'].multiplier ?? 2,
-            range: parsed['critical hit'].range ?? 20,
-            'confirmation bonus': parsed['critical hit']['confirmation bonus'] ?? 0,
-        },
-    };
-};
+import range from 'lodash/range';
 
 interface Props {
     parsed: CharacterState['parsed'];
-    onTemplateCreated: (template: Template) => void;
+    template?: CharacterScriptTemplate;
+    onTemplateConfirmed: (template: CharacterScriptTemplate) => void;
 }
 
 export const ParserPreview: React.VFC<Props> = props => {
-    const { parsed, onTemplateCreated } = props;
+    const { parsed, template, onTemplateConfirmed } = props;
     const { damage } = parsed;
     const totalDamage = React.useMemo(
-        () => NormalizedCalculation.merge(compact([damage['normal'], damage['extra bonus']])),
+        () => MathfinderPolynomial.merge(compact([damage?.['normal'], damage?.['extra bonus']])),
         [damage]
     );
     const { 'base attack bonus': base, 'additional attack bonus': additional } = parsed;
     const attackBonusesPerTurn = React.useMemo(() => {
-        const attackBonuses: number[] = [];
-        if (base) {
-            const additionalValue = additional?.toAverage() ?? 0;
-            for (let baseValue = base.toAverage(); baseValue > 0; baseValue -= 5) {
-                attackBonuses.push(baseValue + additionalValue);
-            }
-        }
-        return attackBonuses;
+        const additionalValue = additional?.toAverage() ?? 0;
+        return range(base?.toAverage() ?? 0, 0, -5).map(baseValue => baseValue + additionalValue);
     }, [base, additional]);
-    const template = React.useMemo(() => toTemplate(parsed), [parsed]);
     return (
         <Column>
             <Typography variant={'h4'}>Preview</Typography>
@@ -107,7 +77,7 @@ export const ParserPreview: React.VFC<Props> = props => {
                 <ListItem>
                     <Typography variant={'body1'}>
                         Critical Hit:
-                        {!!parsed['critical hit']['multiplier'] && (
+                        {!!parsed['critical hit']?.['multiplier'] && (
                             <>
                                 {' '}
                                 <Typography color={'primary.main'} component={'span'}>
@@ -115,7 +85,7 @@ export const ParserPreview: React.VFC<Props> = props => {
                                 </Typography>
                             </>
                         )}
-                        {!!parsed['critical hit']['range'] && (
+                        {!!parsed['critical hit']?.['range'] && (
                             <>
                                 {' '}
                                 <Typography color={'secondary.main'} component={'span'}>
@@ -123,7 +93,7 @@ export const ParserPreview: React.VFC<Props> = props => {
                                 </Typography>
                             </>
                         )}
-                        {!!parsed['critical hit']['confirmation bonus'] && (
+                        {!!parsed['critical hit']?.['confirmation bonus'] && (
                             <>
                                 {' '}
                                 <Typography color={'secondary.main'} component={'span'}>
@@ -132,19 +102,21 @@ export const ParserPreview: React.VFC<Props> = props => {
                                 </Typography>
                             </>
                         )}
-                        {!Object.values(parsed['critical hit']).some(Boolean) && (
-                            <>
-                                {' '}
-                                <Typography color={'primary.main'} component={'span'}>
-                                    pending...
-                                </Typography>
-                            </>
-                        )}
+                        {!parsed['critical hit'] ||
+                            (!Object.values(parsed['critical hit']).some(Boolean) && (
+                                <>
+                                    {' '}
+                                    <Typography color={'primary.main'} component={'span'}>
+                                        pending...
+                                    </Typography>
+                                </>
+                            ))}
                     </Typography>
+                    <Typography variant={'body1'}></Typography>
                 </ListItem>
             </List>
-            <Button variant={'contained'} disabled={!template} onClick={() => template && onTemplateCreated(template)}>
-                Create Template
+            <Button variant={'contained'} disabled={!template} onClick={() => template && onTemplateConfirmed(template)}>
+                Confirm Template
             </Button>
         </Column>
     );

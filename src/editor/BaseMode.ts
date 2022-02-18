@@ -23,12 +23,16 @@ class TokenizerPerLineAware extends Tokenizer {
     }
 }
 
-export class BaseEditorMode extends Mode {
-    getTokenizer() {
-        if (!this.$tokenizer) {
-            this.$highlightRules = this.$highlightRules || new this.HighlightRules(this.$highlightRuleConfig);
-            this.$tokenizer = new TokenizerPerLineAware(this.$highlightRules.getRules());
+export function makePerLineAware(mode: typeof Mode) {
+    return class extends mode {
+        getTokenizer() {
+            if (!this.$tokenizer) {
+                this.$highlightRules = this.$highlightRules || new this.HighlightRules(this.$highlightRuleConfig);
+                this.$tokenizer = new TokenizerPerLineAware(this.$highlightRules.getRules());
+            }
+            return this.$tokenizer;
         }
-        return this.$tokenizer;
-    }
+    };
 }
+
+export const BaseEditorMode = makePerLineAware(Mode);

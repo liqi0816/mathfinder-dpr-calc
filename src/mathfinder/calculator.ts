@@ -1,7 +1,8 @@
 import type { Ace } from 'ace-builds';
+import { TokenType } from '../editor/util';
 
-export class NormalizedCalculation {
-    bonus = 0;
+export class MathfinderPolynomial {
+    bonus: number = 0;
     dice: number[] = [];
 
     toAverage() {
@@ -31,8 +32,8 @@ export class NormalizedCalculation {
             .replace(/^[-] /, '-');
     }
 
-    static merge(calculations: Iterable<NormalizedCalculation>) {
-        const ret = new NormalizedCalculation();
+    static merge(calculations: Iterable<MathfinderPolynomial>) {
+        const ret = new MathfinderPolynomial();
         for (const calculation of calculations) {
             ret.bonus += calculation.bonus;
             for (const [diceSize, number = 0] of calculation.dice.entries()) {
@@ -43,7 +44,7 @@ export class NormalizedCalculation {
     }
 }
 
-export class NormalizedRow extends NormalizedCalculation {
+export class MathfinderInputRow extends MathfinderPolynomial {
     comment?: string;
 
     toString() {
@@ -51,7 +52,7 @@ export class NormalizedRow extends NormalizedCalculation {
     }
 
     static fromRow(row: Iterable<Ace.Token>) {
-        const ret = new NormalizedRow();
+        const ret = new MathfinderInputRow();
 
         const buffer = {
             sign: 1,
@@ -72,20 +73,20 @@ export class NormalizedRow extends NormalizedCalculation {
 
         for (const token of row) {
             const { type, value } = token;
-            if (type === 'constant.numeric') {
+            if (type === TokenType.numeric) {
                 buffer.number = Number(token.value);
-            } else if (type === 'keyword.operator') {
+            } else if (type === TokenType.operator) {
                 buffer.flush();
                 if (value === '+') {
                     buffer.sign = 1;
                 } else if (value === '-') {
                     buffer.sign = -1;
                 }
-            } else if (type === 'entity.name.function') {
+            } else if (type === TokenType.func) {
                 if (value.startsWith('d')) {
                     buffer.diceSize = Number(value.slice(1));
                 }
-            } else if (token.type === 'comment.line') {
+            } else if (type === TokenType.comment) {
                 ret.comment = value.trim().replace(/[^\p{Letter} ]/gu, '');
             }
         }
@@ -94,10 +95,10 @@ export class NormalizedRow extends NormalizedCalculation {
     }
 
     static *fromBlock(block: Iterable<Iterable<Ace.Token>>) {
-        for (const row of block) yield NormalizedRow.fromRow(row);
+        for (const row of block) yield MathfinderInputRow.fromRow(row);
     }
 }
 
 export function parseBlock(block: Iterable<Iterable<Ace.Token>>) {
-    return NormalizedCalculation.merge(NormalizedRow.fromBlock(block));
+    return MathfinderPolynomial.merge(MathfinderInputRow.fromBlock(block));
 }
