@@ -1,5 +1,8 @@
 import type { Ace } from 'ace-builds';
+import { NestedHaystack } from './context';
 import { TokenType } from '../editor/util';
+
+const sign = (number: number): string => (number > 0 ? '+ ' : number < 0 ? '- ' : '');
 
 export class MathfinderPolynomial {
     bonus: number = 0;
@@ -15,16 +18,11 @@ export class MathfinderPolynomial {
 
     toString() {
         return [
-            ...this.dice.map((number, diceSize) =>
-                number > 1
-                    ? `+ ${number}d${diceSize}`
-                    : number === 1
-                    ? `+ d${diceSize}`
-                    : number < 0
-                    ? `- ${-number}d${diceSize}`
-                    : ''
+            ...this.dice.map(
+                (number, diceSize) =>
+                    number && `${sign(number)}${number === 1 || number === -1 ? '' : Math.abs(number)}d${diceSize}`
             ),
-            this.bonus > 0 ? `+ ${this.bonus}` : this.bonus < 0 ? `- ${-this.bonus}` : '',
+            this.bonus && `${sign(this.bonus)}${Math.abs(this.bonus)}`,
         ]
             .filter(Boolean)
             .join(' ')
@@ -36,9 +34,11 @@ export class MathfinderPolynomial {
         const ret = new MathfinderPolynomial();
         for (const calculation of calculations) {
             ret.bonus += calculation.bonus;
-            for (const [diceSize, number = 0] of calculation.dice.entries()) {
-                ret.dice[diceSize] = (ret.dice[diceSize] ?? 0) + number;
-            }
+            calculation.dice.forEach((number, diceSize) => {
+                if (number) {
+                    ret.dice[diceSize] = (ret.dice[diceSize] ?? 0) + number;
+                }
+            });
         }
         return ret;
     }
@@ -51,7 +51,7 @@ export class MathfinderInputRow extends MathfinderPolynomial {
         return this.comment ? `${super.toString()} ${this.comment}` : super.toString();
     }
 
-    static fromRow(row: Iterable<Ace.Token>) {
+    static fromRow(row: Iterable<Ace.Token>, context?: NestedHaystack<MathfinderPolynomial>) {
         const ret = new MathfinderInputRow();
 
         const buffer = {
@@ -60,8 +60,7 @@ export class MathfinderInputRow extends MathfinderPolynomial {
             diceSize: undefined as number | undefined,
             flush() {
                 if (this.diceSize) {
-                    ret.dice[this.diceSize] ??= 0;
-                    ret.dice[this.diceSize] += (this.number ?? 1) * this.sign;
+                    ret.dice[this.diceSize] = (ret.dice[this.diceSize] ?? 0) + this.sign * (this.number ?? 1);
                 } else {
                     ret.bonus += (this.number ?? 0) * this.sign;
                 }
@@ -86,6 +85,7 @@ export class MathfinderInputRow extends MathfinderPolynomial {
                 if (value.startsWith('d')) {
                     buffer.diceSize = Number(value.slice(1));
                 }
+            } else if (type === TokenType.variable) {
             } else if (type === TokenType.comment) {
                 ret.comment = value.trim().replace(/[^\p{Letter} ]/gu, '');
             }

@@ -4,11 +4,12 @@ import range from 'lodash/range';
 import React from 'react';
 import { useImmer } from 'use-immer';
 import { MathfinderPolynomial } from '../mathfinder/calculator';
-import { castMathfinderTemplate, MathfinderTemplate, MathfinderTurn } from '../mathfinder/squence';
+import { castMathfinderTemplate, MathfinderTemplate, MathfinderTurnIntermediate } from '../mathfinder/squence';
 import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
 import { Damage } from './Damage';
 import { ParserPreview } from './ParserPreview';
+import { Plot } from './Plot';
 import { Script } from './Script';
 
 export interface CharacterState {
@@ -38,13 +39,14 @@ export interface CharacterState {
             range?: number;
             'confirmation bonus'?: number;
         };
-        script?: MathfinderTurn;
+        script?: MathfinderTurnIntermediate;
     };
 }
 
 export interface CharacterScreenOption {
     recalculateBAB: boolean;
     expandStats: boolean;
+    skipTemplateConfirmation: boolean;
 }
 
 const genScriptTextFromTemplate = (template: MathfinderTemplate): string => {
@@ -89,6 +91,7 @@ export const Character: React.VFC = () => {
     const [option, setOption] = useImmer<CharacterScreenOption>({
         recalculateBAB: false,
         expandStats: false,
+        skipTemplateConfirmation: false,
     });
     const template = React.useMemo(() => castMathfinderTemplate(state.parsed), [state.parsed]);
     return (
@@ -131,23 +134,26 @@ export const Character: React.VFC = () => {
                 onChange={value => setState(draft => void (draft.rawInput['critical hit'] = value))}
                 onParsed={value => setState(draft => void (draft.parsed['critical hit'] = value))}
             />
-            {!state.rawInput.script && (
+            {!(state.rawInput.script || option.skipTemplateConfirmation) ? (
                 <ParserPreview
                     parsed={state.parsed}
                     template={template}
                     onTemplateConfirmed={template =>
                         setState(draft => void (draft.rawInput['script'] = genScriptTextFromTemplate(template)))
                     }
-                />
-            )}
-            {state.rawInput.script && (
-                <Script
-                    value={state.rawInput.script}
-                    onChange={value => setState(draft => void (draft.rawInput.script = value))}
-                    onParsed={value => setState(draft => void (draft.parsed.script = value))}
-                    option={option}
                     setOption={setOption}
                 />
+            ) : (
+                <>
+                    <Script
+                        value={state.rawInput.script}
+                        onChange={value => setState(draft => void (draft.rawInput.script = value))}
+                        onParsed={value => setState(draft => void (draft.parsed.script = value))}
+                        option={option}
+                        setOption={setOption}
+                    />
+                    <Plot parsed={state.parsed} />
+                </>
             )}
         </Stack>
     );

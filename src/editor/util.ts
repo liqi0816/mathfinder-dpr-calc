@@ -8,13 +8,14 @@ export function* iterateEditor({ session }: { session: Ace.EditSession }) {
 }
 
 export enum TokenType {
-    space = 'text.mathfinderm',
-    comment = 'comment.line.mathfinder',
     numeric = 'constant.numeric.mathfinder',
     operator = 'keyword.operator.mathfinder',
-    invalid = 'invalid.illegal.mathfinder',
     func = 'entity.name.function.mathfinder',
     variable = 'support.constant.mathfinder',
+    comment = 'comment.line.mathfinder',
+    invalid = 'invalid.illegal.mathfinder',
+    space = 'text.mathfinder',
+    tag = 'meta.tag.mathfinder',
 }
 
 /**
@@ -22,6 +23,10 @@ export enum TokenType {
  */
 export function typedRules<TDumbRules extends { start: unknown }>(rules: {
     [_ in keyof TDumbRules]: {
+        /**
+         * @warning if `RegExp`, no flags allowed (ace has `.toString().slice(1, -1)`)
+         * @warning if `string`, should be RegExp escaped (use `lodash.escapeRegExp`)
+         */
         regex: RegExp | string;
         token?: TokenType | TokenType[];
         next?: keyof TDumbRules;

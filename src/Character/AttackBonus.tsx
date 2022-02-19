@@ -1,7 +1,7 @@
 import { Paper, Typography } from '@mui/material';
 import React from 'react';
 import { Editor, ReadonlyEditor } from '../editor/Editor';
-import { SimpleNumberCommentMode } from '../editor/SimpleNumber';
+import { SimpleNumberMode } from '../editor/SimpleNumber';
 import { iterateEditor } from '../editor/util';
 import { parseBlock } from '../mathfinder/calculator';
 import { CharacterState } from './Character';
@@ -26,12 +26,12 @@ export const AttackBonus: React.VFC<Props> = props => {
                 </Typography>
                 <Typography variant={'body1'}>Please list progression like this</Typography>
                 <ReadonlyEditor
-                    mode={SimpleNumberCommentMode.instance}
+                    mode={SimpleNumberMode.instance}
                     value={'1 Some class description\n11 Eldritch Archer at Lv.15\n5 Eldritch Knight at Lv.5'}
                 />
             </Paper>
             <Editor
-                mode={SimpleNumberCommentMode.instance}
+                mode={SimpleNumberMode.instance}
                 placeholder={'Please enter something here...'}
                 style={{ minHeight: 200, flexGrow: 1 }}
                 value={value['base attack bonus']}
@@ -44,12 +44,12 @@ export const AttackBonus: React.VFC<Props> = props => {
             <Paper variant={'outlined'} sx={{ padding: 1 }}>
                 <Typography variant={'body1'}>Please list bonuses like this</Typography>
                 <ReadonlyEditor
-                    mode={SimpleNumberCommentMode.instance}
+                    mode={SimpleNumberMode.instance}
                     value={'2 Some bonus description\n1 Weapon Focus\n-2 Rapid shot'}
                 />
             </Paper>
             <Editor
-                mode={SimpleNumberCommentMode.instance}
+                mode={SimpleNumberMode.instance}
                 placeholder={'Please enter something here...'}
                 style={{ minHeight: 200, flexGrow: 1 }}
                 value={value['additional attack bonus']}

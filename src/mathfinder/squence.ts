@@ -1,6 +1,11 @@
 import type { Ace } from 'ace-builds';
 import { TokenType } from '../editor/util';
+import type { BaseMode } from '../editor/BaseMode';
 import { MathfinderPolynomial, MathfinderInputRow } from './calculator';
+import yaml from 'js-yaml';
+import merge from 'lodash/merge';
+import isEqual from 'lodash/isEqual';
+import { deepEntries, NestedHaystack } from './context';
 
 export interface MathfinderTemplate {
     'base attack bonus': MathfinderPolynomial;
@@ -23,7 +28,7 @@ export interface MathfinderTemplatePartial {
     'critical hit'?: Partial<MathfinderTemplate['critical hit']>;
 }
 
-export function castMathfinderTemplate(partial: MathfinderTemplatePartial) {
+export function castMathfinderTemplate(partial: MathfinderTemplatePartial): MathfinderTemplate | undefined {
     if (!partial['base attack bonus']?.toAverage()) return;
     if (!partial.damage?.['normal']?.toAverage() && !partial.damage?.['extra bonus']?.toAverage()) return;
     return {
@@ -34,7 +39,7 @@ export function castMathfinderTemplate(partial: MathfinderTemplatePartial) {
             'extra bonus': partial.damage['extra bonus'] ?? new MathfinderPolynomial(),
         },
         'critical hit': {
-            multiplier: partial['critical hit']?.multiplier ?? 2,
+            multiplier: partial['critical hit']?.multiplier ?? 1,
             range: partial['critical hit']?.range ?? 20,
             'confirmation bonus': partial['critical hit']?.['confirmation bonus'] ?? 0,
         },
@@ -47,34 +52,35 @@ export interface MathfinderAction {
     damage: MathfinderInputRow;
 }
 
-interface MathfinderActionIntermediate {
-    name: string;
-    'hit chance': Iterable<Ace.Token>;
-    damage: Iterable<Ace.Token>;
+export class MathfinderTurnError extends Error {
+    name = MathfinderTurnError.name;
 }
 
-export class MathfinderTurn {
-    static readonly statFields: ReadonlyArray<keyof MathfinderTemplatePartial> = [
-        'base attack bonus',
-        'additional attack bonus',
-        'damage',
-        'critical hit',
-    ] as const;
-    stat: MathfinderTemplatePartial = {};
-    actions: MathfinderActionIntermediate[] = [];
+export class MathfinderTurnIntermediate {
+    haystack: NestedHaystack<Iterable<Ace.Token>> = {};
 
-    toNormalized(): MathfinderAction[] {
-        return this.actions.map(action => {
-            const ret = {
-                name: action.name,
-                'hit chance': MathfinderInputRow.fromRow(action['hit chance']),
-                damage: MathfinderInputRow.fromRow(action.damage),
-            };
-            return ret;
-        });
+    toNormalized(template?: MathfinderTemplatePartial) {
+
+    }
+
+    static fromYaml(yamlString: string, tokenizer: ReturnType<InstanceType<typeof BaseMode>['getTokenizer']>) {
+        const ret = new MathfinderTurnIntermediate();
+        const haystack = yaml.load(yamlString);
+
+        if (!haystack || typeof haystack !== 'object') {
+            throw new MathfinderTurnError('Please list actions like [name]: [value]\n(YAML shoule be a Record<string, string>)');
+        }
+
+        for (const [key, value, parent] of deepEntries(haystack as Record<string, unknown>)) {
+            parent[key] = tokenizer.getLineTokens(String(value), 'scriptStart').tokens;
+        }
+
+        ret.haystack = haystack as NestedHaystack<Iterable<Ace.Token>>;
+
+        return ret;
     }
 }
 
-function foo() {
-    const context: Record<string, MathfinderInputRow> = {};
+function isIterable(value: any): value is Iterable<unknown> {
+    return typeof value?.[Symbol.iterator] === 'function';
 }

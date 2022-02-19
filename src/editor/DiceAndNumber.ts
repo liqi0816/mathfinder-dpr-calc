@@ -1,10 +1,10 @@
 import * as ace from 'ace-builds';
-import { BaseEditorMode } from './BaseMode';
+import { BaseMode } from './BaseMode';
 import { TokenType, typedRules } from './util';
 
 const TextHighlightRules = ace.require('ace/mode/text_highlight_rules').TextHighlightRules;
 
-export class DiceAndNumberCommentMode extends BaseEditorMode {
+export class DiceAndNumberMode extends BaseMode {
     HighlightRules = class extends TextHighlightRules {
         $rules = typedRules({
             start: [
@@ -25,5 +25,5 @@ export class DiceAndNumberCommentMode extends BaseEditorMode {
         });
     };
 
-    static instance = new DiceAndNumberCommentMode();
+    static instance = new DiceAndNumberMode();
 }
