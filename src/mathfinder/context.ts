@@ -10,7 +10,7 @@ export type NestedHaystack<Terminal, Key extends string = string> = {
     [key in Key]: Terminal | NestedHaystack<Terminal>;
 };
 
-const isPrimitive = <Terminal>(value: any): value is Terminal => typeof value !== 'object';
+const isPrimitive = <Terminal>(value: any): value is Terminal => value === null || typeof value !== 'object';
 export function* deepEntries<Terminal, Key extends string>(
     root: NestedHaystack<Terminal, Key>,
     isTerminal: (value: any) => value is Terminal = isPrimitive

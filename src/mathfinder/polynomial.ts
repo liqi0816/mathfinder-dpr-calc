@@ -104,7 +104,7 @@ export class MathfinderInputRow extends MathfinderPolynomial {
                         buffer.variable = variable;
                     } else {
                         throw new MathfinderPolynomialError(
-                            `Please provide variable ${value}\n(token: ${JSON.stringify(token)})`
+                            `Please provide variable "${value}"\n(token: ${JSON.stringify(token)})`
                         );
                     }
                 }

@@ -12,7 +12,7 @@ import {
 import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
 import { Damage } from './Damage';
-import { ParserPreview } from './ParserPreview';
+import { TemplatePreview } from './TemplatePreview';
 import { Plot } from './Plot';
 import { Script } from './Script';
 
@@ -30,8 +30,9 @@ export interface CharacterState {
 export interface CharacterScreenOption {
     recalculateBAB: boolean;
     expandStats: boolean;
-    skipTemplateConfirmation: boolean;
 }
+
+export type CharacterScreenStage = 'template' | 'script';
 
 const genScriptTextFromTemplate = (template: MathfinderTemplate): string => {
     const baseValue = template['base attack bonus'].toAverage();
@@ -89,8 +90,8 @@ export const Character: React.VFC = () => {
     const [option, setOption] = React.useState<CharacterScreenOption>({
         recalculateBAB: false,
         expandStats: false,
-        skipTemplateConfirmation: false,
     });
+    const [stage, setStage] = React.useState<CharacterScreenStage>('template');
     return (
         <Stack
             component={'main'}
@@ -133,12 +134,15 @@ export const Character: React.VFC = () => {
                 onChange={value => setTemplateInput(templateInput => ({ ...templateInput, 'critical hit': value }))}
                 onParsed={value => setTemplatePartial(templatePartial => ({ ...templatePartial, 'critical hit': value }))}
             />
-            {!(scriptInput || option.skipTemplateConfirmation) ? (
-                <ParserPreview
+            {stage === 'template' ? (
+                <TemplatePreview
                     partial={templatePartial}
                     complete={templateComplete}
-                    onTemplateConfirmed={template => setScriptInput(genScriptTextFromTemplate(template))}
-                    setOption={setOption}
+                    onTemplateConfirmed={template => {
+                        setScriptInput(genScriptTextFromTemplate(template));
+                        setStage('script');
+                    }}
+                    onSkip={() => setStage('script')}
                 />
             ) : (
                 <>
@@ -148,6 +152,7 @@ export const Character: React.VFC = () => {
                         onParsed={setScriptPartial}
                         option={option}
                         setOption={setOption}
+                        onBack={() => setStage('template')}
                     />
                     <Plot template={templatePartial} script={scriptPartial} />
                 </>

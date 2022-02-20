@@ -5,18 +5,18 @@ import range from 'lodash/range';
 import React from 'react';
 import { MathfinderPolynomial } from '../mathfinder/polynomial';
 import { MathfinderTemplate } from '../mathfinder/squence';
-import { CharacterScreenOption, CharacterState } from './Character';
+import { CharacterState } from './Character';
 import { Column } from './components/Column';
 
 interface Props {
     partial: CharacterState['template']['partial'];
     complete?: MathfinderTemplate;
     onTemplateConfirmed: (template: MathfinderTemplate) => void;
-    setOption: React.Dispatch<React.SetStateAction<CharacterScreenOption>>;
+    onSkip: () => void;
 }
 
-export const ParserPreview: React.VFC<Props> = props => {
-    const { partial, complete, onTemplateConfirmed, setOption } = props;
+export const TemplatePreview: React.VFC<Props> = props => {
+    const { partial, complete, onTemplateConfirmed, onSkip } = props;
     const { damage } = partial;
     const totalDamage = React.useMemo(
         () => MathfinderPolynomial.merge(compact([damage?.['normal'], damage?.['extra bonus']])),
@@ -133,7 +133,7 @@ export const ParserPreview: React.VFC<Props> = props => {
             <Button variant={'contained'} disabled={!complete} onClick={() => complete && onTemplateConfirmed(complete)}>
                 Confirm Template
             </Button>
-            <Link sx={{ cursor: 'pointer' }} onClick={() => setOption(option => ({ ...option, skipTemplateConfirmation: true }))}>
+            <Link sx={{ cursor: 'pointer' }} onClick={onSkip}>
                 skip
             </Link>
         </Column>
