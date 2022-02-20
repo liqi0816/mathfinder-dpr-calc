@@ -3,19 +3,19 @@ import React from 'react';
 import { Editor, ReadonlyEditor } from '../editor/Editor';
 import { SimpleNumberMode } from '../editor/SimpleNumber';
 import { iterateEditor } from '../editor/util';
-import { parseBlock } from '../mathfinder/calculator';
+import { parseBlock } from '../mathfinder/polynomial';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 
 interface Props {
-    value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'additional attack bonus'>;
-    onChange: (value: Pick<CharacterState['rawInput'], 'base attack bonus' | 'additional attack bonus'>) => void;
-    onParsed: (parsed: Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>) => void;
+    value: Pick<CharacterState['template']['input'], 'base attack bonus' | 'additional attack bonus'>;
+    onChange: (value: Props['value']) => void;
+    onParsed: (parsed: Pick<CharacterState['template']['partial'], 'base attack bonus' | 'additional attack bonus'>) => void;
 }
 
 export const AttackBonus: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const parsed = React.useRef<Pick<CharacterState['parsed'], 'base attack bonus' | 'additional attack bonus'>>({});
+    const parsed = React.useRef<Parameters<Props['onParsed']>[0]>({});
     return (
         <Column>
             <Typography variant={'h4'}>Attack Bonus</Typography>

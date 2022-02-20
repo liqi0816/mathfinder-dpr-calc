@@ -12,15 +12,15 @@ export class SimpleNumberMode extends BaseMode {
                 { regex: /(?:)/, next: 'operator' },
             ],
             operator: [
-                { regex: /[+-]/, token: TokenType.operator, next: 'term' },
-                { regex: /(?=\S)/, token: TokenType.comment, next: 'comment' },
+                { regex: /[+-]/, token: TokenType.Operator, next: 'term' },
+                { regex: /(?=\S)/, token: TokenType.Comment, next: 'comment' },
                 { regex: /\n/, next: 'start' },
             ],
             term: [
-                { regex: /\d+/, token: TokenType.numeric, next: 'operator' },
-                { regex: /\n/, token: TokenType.numeric, next: 'start' },
+                { regex: /\d+/, token: TokenType.Numeric, next: 'operator' },
+                { regex: /\n/, token: TokenType.Numeric, next: 'start' },
             ],
-            comment: [{ regex: /.*/, token: TokenType.comment, next: 'start' }],
+            comment: [{ regex: /.*/, token: TokenType.Comment, next: 'start' }],
         });
     };
 

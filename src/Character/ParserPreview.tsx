@@ -3,31 +3,39 @@ import clamp from 'lodash/clamp';
 import compact from 'lodash/compact';
 import range from 'lodash/range';
 import React from 'react';
-import { Updater } from 'use-immer';
-import { MathfinderPolynomial } from '../mathfinder/calculator';
+import { MathfinderPolynomial } from '../mathfinder/polynomial';
 import { MathfinderTemplate } from '../mathfinder/squence';
 import { CharacterScreenOption, CharacterState } from './Character';
 import { Column } from './components/Column';
 
 interface Props {
-    parsed: CharacterState['parsed'];
-    template?: MathfinderTemplate;
+    partial: CharacterState['template']['partial'];
+    complete?: MathfinderTemplate;
     onTemplateConfirmed: (template: MathfinderTemplate) => void;
-    setOption: Updater<CharacterScreenOption>;
+    setOption: React.Dispatch<React.SetStateAction<CharacterScreenOption>>;
 }
 
 export const ParserPreview: React.VFC<Props> = props => {
-    const { parsed, template, onTemplateConfirmed, setOption } = props;
-    const { damage } = parsed;
+    const { partial, complete, onTemplateConfirmed, setOption } = props;
+    const { damage } = partial;
     const totalDamage = React.useMemo(
         () => MathfinderPolynomial.merge(compact([damage?.['normal'], damage?.['extra bonus']])),
         [damage]
     );
-    const { 'base attack bonus': base, 'additional attack bonus': additional } = parsed;
+    const { 'base attack bonus': base, 'additional attack bonus': additional } = partial;
     const attackBonusesPerTurn = React.useMemo(() => {
         const additionalValue = additional?.toAverage() ?? 0;
         return range(base?.toAverage() ?? 0, 0, -5).map(baseValue => baseValue + additionalValue);
     }, [base, additional]);
+    const { 'critical hit': partialCritical } = partial;
+    const critical = React.useMemo(
+        () => ({
+            multiplier: partialCritical?.multiplier?.toAverage() || undefined,
+            range: partialCritical?.range?.toAverage() || undefined,
+            'confirmation bonus': partialCritical?.['confirmation bonus']?.toAverage() || undefined,
+        }),
+        [partialCritical]
+    );
     return (
         <Column>
             <Typography variant={'h4'}>Preview</Typography>
@@ -67,33 +75,33 @@ export const ParserPreview: React.VFC<Props> = props => {
                     <Typography variant={'body1'}>
                         <>
                             Critical Hit:
-                            {!!parsed['critical hit']?.['multiplier'] && (
+                            {critical['multiplier'] && (
                                 <>
                                     {' '}
                                     <Typography color={'primary.main'} component={'span'}>
-                                        x{parsed['critical hit']['multiplier']}
+                                        x{critical['multiplier']}
                                     </Typography>
                                 </>
                             )}
-                            {!!parsed['critical hit']?.['range'] && (
+                            {critical['range'] && (
                                 <>
                                     {' '}
                                     <Typography color={'secondary.main'} component={'span'}>
-                                        {clamp((21 - parsed['critical hit']['range']) * 5, 5, 95)}%
+                                        {clamp((21 - critical['range']) * 5, 5, 95)}%
                                     </Typography>
                                 </>
                             )}
-                            {!!parsed['critical hit']?.['confirmation bonus'] && (
+                            {critical['confirmation bonus'] && (
                                 <>
                                     {' '}
                                     <Typography color={'secondary.main'} component={'span'}>
-                                        confirmation{parsed['critical hit']['confirmation bonus'] > 0 ? '+' : '-'}
-                                        {Math.abs(parsed['critical hit']['confirmation bonus'])}
+                                        confirmation{critical['confirmation bonus'] > 0 ? '+' : '-'}
+                                        {Math.abs(critical['confirmation bonus'])}
                                     </Typography>
                                 </>
                             )}
-                            {!parsed['critical hit'] ||
-                                (!Object.values(parsed['critical hit']).some(Boolean) && (
+                            {!critical ||
+                                (!Object.values(critical).some(Boolean) && (
                                     <>
                                         {' '}
                                         <Typography color={'primary.main'} component={'span'}>
@@ -116,13 +124,13 @@ export const ParserPreview: React.VFC<Props> = props => {
                     <Typography variant={'body1'}>
                         {'Average Critical Damage: '}
                         <Typography color={'secondary.main'} component={'span'}>
-                            {(damage?.['normal']?.toAverage() ?? 0) * (parsed['critical hit']?.['multiplier'] ?? 1) +
+                            {(damage?.['normal']?.toAverage() ?? 0) * (critical?.['multiplier'] ?? 1) +
                                 (damage?.['extra bonus']?.toAverage() ?? 0) || 'pending...'}
                         </Typography>
                     </Typography>
                 </ListItem>
             </List>
-            <Button variant={'contained'} disabled={!template} onClick={() => template && onTemplateConfirmed(template)}>
+            <Button variant={'contained'} disabled={!complete} onClick={() => complete && onTemplateConfirmed(complete)}>
                 Confirm Template
             </Button>
             <Link sx={{ cursor: 'pointer' }} onClick={() => setOption(option => ({ ...option, skipTemplateConfirmation: true }))}>

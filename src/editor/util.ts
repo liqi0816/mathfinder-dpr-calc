@@ -8,28 +8,28 @@ export function* iterateEditor({ session }: { session: Ace.EditSession }) {
 }
 
 export enum TokenType {
-    numeric = 'constant.numeric.mathfinder',
-    operator = 'keyword.operator.mathfinder',
-    func = 'entity.name.function.mathfinder',
-    variable = 'support.constant.mathfinder',
-    comment = 'comment.line.mathfinder',
-    invalid = 'invalid.illegal.mathfinder',
-    space = 'text.mathfinder',
-    tag = 'meta.tag.mathfinder',
+    Numeric = 'constant.numeric.mathfinder',
+    Operator = 'keyword.operator.mathfinder',
+    Func = 'entity.name.function.mathfinder',
+    Variable = 'support.constant.mathfinder',
+    Comment = 'comment.line.mathfinder',
+    Invalid = 'invalid.illegal.mathfinder',
+    Space = 'text.mathfinder',
+    Tag = 'meta.tag.mathfinder',
 }
 
 /**
  * see https://github.com/ajaxorg/ace/blob/master/lib/ace/tokenizer.js#L228
  */
-export function typedRules<TDumbRules extends { start: unknown }>(rules: {
-    [_ in keyof TDumbRules]: {
+export function typedRules<DumbRules extends { start: unknown }>(rules: {
+    [_ in keyof DumbRules]: {
         /**
          * @warning if `RegExp`, no flags allowed (ace has `.toString().slice(1, -1)`)
          * @warning if `string`, should be RegExp escaped (use `lodash.escapeRegExp`)
          */
         regex: RegExp | string;
         token?: TokenType | TokenType[];
-        next?: keyof TDumbRules;
+        next?: keyof DumbRules;
     }[];
 }) {
     return rules;

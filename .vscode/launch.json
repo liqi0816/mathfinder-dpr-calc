@@ -6,7 +6,10 @@
             "request": "launch",
             "name": "Webpack Dev",
             "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
+            "webRoot": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**", "**/node_modules/**"
+            ]
         }
     ]
 }

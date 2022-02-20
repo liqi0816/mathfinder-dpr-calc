@@ -1,12 +1,14 @@
 import type { Ace } from 'ace-builds';
-import { NestedHaystack } from './context';
 import { TokenType } from '../editor/util';
+
+export class MathfinderPolynomialError extends Error {
+    name = MathfinderPolynomialError.name;
+}
 
 const sign = (number: number): string => (number > 0 ? '+ ' : number < 0 ? '- ' : '');
 
 export class MathfinderPolynomial {
-    bonus: number = 0;
-    dice: number[] = [];
+    constructor(public bonus: number = 0, public dice: number[] = []) {}
 
     toAverage() {
         let ret = this.bonus;
@@ -30,17 +32,43 @@ export class MathfinderPolynomial {
             .replace(/^[-] /, '-');
     }
 
+    add(calculation: MathfinderPolynomial, multiplier: number = 1) {
+        this.bonus += multiplier * calculation.bonus;
+        calculation.dice.forEach((number, diceSize) => {
+            if (number) {
+                this.dice[diceSize] = (this.dice[diceSize] ?? 0) + multiplier * number;
+            }
+        });
+        return this;
+    }
+
     static merge(calculations: Iterable<MathfinderPolynomial>) {
         const ret = new MathfinderPolynomial();
         for (const calculation of calculations) {
-            ret.bonus += calculation.bonus;
-            calculation.dice.forEach((number, diceSize) => {
-                if (number) {
-                    ret.dice[diceSize] = (ret.dice[diceSize] ?? 0) + number;
-                }
-            });
+            ret.add(calculation);
         }
         return ret;
+    }
+}
+
+class InputRowBuffer {
+    sign: number = 1;
+    number?: number = undefined;
+    diceSize?: number = undefined;
+    variable?: MathfinderPolynomial = undefined;
+
+    flush(row: MathfinderInputRow) {
+        if (this.diceSize) {
+            row.dice[this.diceSize] = (row.dice[this.diceSize] ?? 0) + this.sign * (this.number ?? 1);
+        } else if (this.variable) {
+            row.add(this.variable, this.sign * (this.number ?? 1));
+        } else {
+            row.bonus += this.sign * (this.number ?? 0);
+        }
+        this.sign = 1;
+        this.number = undefined;
+        this.diceSize = undefined;
+        this.variable = undefined;
     }
 }
 
@@ -51,46 +79,40 @@ export class MathfinderInputRow extends MathfinderPolynomial {
         return this.comment ? `${super.toString()} ${this.comment}` : super.toString();
     }
 
-    static fromRow(row: Iterable<Ace.Token>, context?: NestedHaystack<MathfinderPolynomial>) {
+    static fromRow(row: Iterable<Ace.Token>, variableResolver?: (token: Ace.Token) => MathfinderPolynomial | undefined) {
         const ret = new MathfinderInputRow();
-
-        const buffer = {
-            sign: 1,
-            number: undefined as number | undefined,
-            diceSize: undefined as number | undefined,
-            flush() {
-                if (this.diceSize) {
-                    ret.dice[this.diceSize] = (ret.dice[this.diceSize] ?? 0) + this.sign * (this.number ?? 1);
-                } else {
-                    ret.bonus += (this.number ?? 0) * this.sign;
-                }
-                this.sign = 1;
-                this.number = undefined;
-                this.diceSize = undefined;
-            },
-        };
-
+        const buffer = new InputRowBuffer();
         for (const token of row) {
             const { type, value } = token;
-            if (type === TokenType.numeric) {
+            if (type === TokenType.Numeric) {
                 buffer.number = Number(token.value);
-            } else if (type === TokenType.operator) {
-                buffer.flush();
+            } else if (type === TokenType.Operator) {
+                buffer.flush(ret);
                 if (value === '+') {
                     buffer.sign = 1;
                 } else if (value === '-') {
                     buffer.sign = -1;
                 }
-            } else if (type === TokenType.func) {
+            } else if (type === TokenType.Func) {
                 if (value.startsWith('d')) {
                     buffer.diceSize = Number(value.slice(1));
                 }
-            } else if (type === TokenType.variable) {
-            } else if (type === TokenType.comment) {
+            } else if (type === TokenType.Variable) {
+                if (variableResolver) {
+                    const variable = variableResolver(token);
+                    if (variable) {
+                        buffer.variable = variable;
+                    } else {
+                        throw new MathfinderPolynomialError(
+                            `Please provide variable ${value}\n(token: ${JSON.stringify(token)})`
+                        );
+                    }
+                }
+            } else if (type === TokenType.Comment) {
                 ret.comment = value.trim().replace(/[^\p{Letter} ]/gu, '');
             }
         }
-        buffer.flush();
+        buffer.flush(ret);
         return ret;
     }
 

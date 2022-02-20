@@ -23,27 +23,27 @@ export function genYamlScriptVarialesMode(identifiers: (string | RegExp)[] = [])
                     ...template.start,
                 ],
                 scriptStart: [
-                    { regex: /(same as)(\s)/, token: [TokenType.operator, TokenType.space] },
+                    { regex: /(same as)(\s)/, token: [TokenType.Operator, TokenType.Space] },
                     { regex: /(?=[+-])/, next: 'scriptOperator' },
                     { regex: /(?:)/, next: 'scriptTerm' },
                 ],
                 scriptOperator: [
-                    { regex: /[+-]/, token: TokenType.operator, next: 'scriptTerm' },
-                    { regex: /(?=\S)/, token: TokenType.comment, next: 'scriptComment' },
+                    { regex: /[+-]/, token: TokenType.Operator, next: 'scriptTerm' },
+                    { regex: /(?=\S)/, token: TokenType.Comment, next: 'scriptComment' },
                     { regex: /\n/, next: 'start' },
                 ],
                 scriptTerm: [
-                    { regex: /(\d*)(d\d+)/, token: [TokenType.numeric, TokenType.func], next: 'scriptOperator' },
-                    { regex: /\d+/, token: TokenType.numeric, next: 'scriptOperator' },
+                    { regex: /(\d*)(d\d+)/, token: [TokenType.Numeric, TokenType.Func], next: 'scriptOperator' },
+                    { regex: /\d+/, token: TokenType.Numeric, next: 'scriptOperator' },
                     ...identifiers.map(regex => ({
                         regex: typeof regex === 'string' ? escapeRegExp(regex) : regex.source,
-                        token: TokenType.variable,
+                        token: TokenType.Variable,
                         next: 'scriptOperator' as const,
                     })),
-                    { regex: /(?=\S)/, token: TokenType.comment, next: 'scriptComment' },
+                    { regex: /(?=\S)/, token: TokenType.Comment, next: 'scriptComment' },
                     { regex: /\n/, next: 'start' },
                 ],
-                scriptComment: [{ regex: /.*/, token: TokenType.space, next: 'start' }],
+                scriptComment: [{ regex: /.*/, token: TokenType.Space, next: 'start' }],
             });
         };
 

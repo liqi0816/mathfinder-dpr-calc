@@ -3,19 +3,19 @@ import React from 'react';
 import { DiceAndNumberMode } from '../editor/DiceAndNumber';
 import { Editor, ReadonlyEditor } from '../editor/Editor';
 import { iterateEditor } from '../editor/util';
-import { parseBlock } from '../mathfinder/calculator';
+import { parseBlock } from '../mathfinder/polynomial';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 
 interface Props {
-    value: CharacterState['rawInput']['damage'];
-    onChange: (value: CharacterState['rawInput']['damage']) => void;
-    onParsed: (parsed: CharacterState['parsed']['damage']) => void;
+    value: CharacterState['template']['input']['damage'];
+    onChange: (value: Props['value']) => void;
+    onParsed: (parsed: CharacterState['template']['partial']['damage']) => void;
 }
 
 export const Damage: React.VFC<Props> = props => {
     const { value, onChange, onParsed } = props;
-    const parsed = React.useRef<CharacterState['parsed']['damage']>({});
+    const parsed = React.useRef<Parameters<Props['onParsed']>[0]>({});
     return (
         <Column>
             <Typography variant={'h4'}>Damage</Typography>

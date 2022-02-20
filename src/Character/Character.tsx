@@ -2,9 +2,13 @@ import { Stack } from '@mui/material';
 import yaml from 'js-yaml';
 import range from 'lodash/range';
 import React from 'react';
-import { useImmer } from 'use-immer';
-import { MathfinderPolynomial } from '../mathfinder/calculator';
-import { castMathfinderTemplate, MathfinderTemplate, MathfinderTurnIntermediate } from '../mathfinder/squence';
+import { ReplaceNestedType } from '../mathfinder/context';
+import {
+    castMathfinderTemplate,
+    MathfinderTemplate,
+    MathfinderTemplatePartial,
+    MathfinderTurnIntermediate,
+} from '../mathfinder/squence';
 import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
 import { Damage } from './Damage';
@@ -13,33 +17,13 @@ import { Plot } from './Plot';
 import { Script } from './Script';
 
 export interface CharacterState {
-    rawInput: {
-        'base attack bonus': string;
-        'additional attack bonus': string;
-        damage: {
-            normal: string;
-            'extra bonus': string;
-        };
-        'critical hit': {
-            multiplier: string;
-            range: string;
-            'confirmation bonus': string;
-        };
-        script: string;
+    template: {
+        input: ReplaceNestedType<MathfinderTemplate, string>;
+        partial: MathfinderTemplatePartial;
     };
-    parsed: {
-        'base attack bonus'?: MathfinderPolynomial;
-        'additional attack bonus'?: MathfinderPolynomial;
-        damage?: {
-            normal?: MathfinderPolynomial;
-            'extra bonus'?: MathfinderPolynomial;
-        };
-        'critical hit'?: {
-            multiplier?: number;
-            range?: number;
-            'confirmation bonus'?: number;
-        };
-        script?: MathfinderTurnIntermediate;
+    script: {
+        input: string;
+        partial?: MathfinderTurnIntermediate;
     };
 }
 
@@ -71,29 +55,42 @@ const genScriptTextFromTemplate = (template: MathfinderTemplate): string => {
 };
 
 export const Character: React.VFC = () => {
-    const [state, setState] = useImmer<CharacterState>({
-        rawInput: {
-            'base attack bonus': '',
-            'additional attack bonus': '',
-            damage: {
-                normal: '',
-                'extra bonus': '',
-            },
-            'critical hit': {
-                multiplier: '2',
-                range: '20',
-                'confirmation bonus': '',
-            },
-            script: '',
+    const [templateInput, setTemplateInput] = React.useState<CharacterState['template']['input']>({
+        'base attack bonus': '',
+        'additional attack bonus': '',
+        damage: {
+            normal: '',
+            'extra bonus': '',
         },
-        parsed: {},
+        'critical hit': {
+            multiplier: '2',
+            range: '20',
+            'confirmation bonus': '',
+        },
     });
-    const [option, setOption] = useImmer<CharacterScreenOption>({
+    const [templatePartial, setTemplatePartial] = React.useState<CharacterState['template']['partial']>({
+        // predefine shape so `yaml.dump` has a stable output order
+        // does not affect the actual calculation
+        'base attack bonus': undefined,
+        'additional attack bonus': undefined,
+        damage: {
+            normal: undefined,
+            'extra bonus': undefined,
+        },
+        'critical hit': {
+            multiplier: undefined,
+            range: undefined,
+            'confirmation bonus': undefined,
+        },
+    });
+    const templateComplete = React.useMemo(() => castMathfinderTemplate(templatePartial), [templatePartial]);
+    const [scriptInput, setScriptInput] = React.useState<CharacterState['script']['input']>('');
+    const [scriptPartial, setScriptPartial] = React.useState<CharacterState['script']['partial']>();
+    const [option, setOption] = React.useState<CharacterScreenOption>({
         recalculateBAB: false,
         expandStats: false,
         skipTemplateConfirmation: false,
     });
-    const template = React.useMemo(() => castMathfinderTemplate(state.parsed), [state.parsed]);
     return (
         <Stack
             component={'main'}
@@ -110,49 +107,49 @@ export const Character: React.VFC = () => {
             }}
         >
             <AttackBonus
-                value={state.rawInput}
+                value={templateInput}
                 onChange={value =>
-                    setState(draft => {
-                        draft.rawInput['base attack bonus'] = value['base attack bonus'];
-                        draft.rawInput['additional attack bonus'] = value['additional attack bonus'];
-                    })
+                    setTemplateInput(templateInput => ({
+                        ...templateInput,
+                        'base attack bonus': value['base attack bonus'],
+                        'additional attack bonus': value['additional attack bonus'],
+                    }))
                 }
                 onParsed={value =>
-                    setState(draft => {
-                        draft.parsed['base attack bonus'] = value['base attack bonus'];
-                        draft.parsed['additional attack bonus'] = value['additional attack bonus'];
-                    })
+                    setTemplatePartial(templatePartial => ({
+                        ...templatePartial,
+                        'base attack bonus': value['base attack bonus'],
+                        'additional attack bonus': value['additional attack bonus'],
+                    }))
                 }
             />
             <Damage
-                value={state.rawInput.damage}
-                onChange={value => setState(draft => void (draft.rawInput.damage = value))}
-                onParsed={value => setState(draft => void (draft.parsed.damage = value))}
+                value={templateInput.damage}
+                onChange={value => setTemplateInput(templateInput => ({ ...templateInput, damage: value }))}
+                onParsed={value => setTemplatePartial(templatePartial => ({ ...templatePartial, damage: value }))}
             />
             <CriticalHit
-                value={state.rawInput['critical hit']}
-                onChange={value => setState(draft => void (draft.rawInput['critical hit'] = value))}
-                onParsed={value => setState(draft => void (draft.parsed['critical hit'] = value))}
+                value={templateInput['critical hit']}
+                onChange={value => setTemplateInput(templateInput => ({ ...templateInput, 'critical hit': value }))}
+                onParsed={value => setTemplatePartial(templatePartial => ({ ...templatePartial, 'critical hit': value }))}
             />
-            {!(state.rawInput.script || option.skipTemplateConfirmation) ? (
+            {!(scriptInput || option.skipTemplateConfirmation) ? (
                 <ParserPreview
-                    parsed={state.parsed}
-                    template={template}
-                    onTemplateConfirmed={template =>
-                        setState(draft => void (draft.rawInput['script'] = genScriptTextFromTemplate(template)))
-                    }
+                    partial={templatePartial}
+                    complete={templateComplete}
+                    onTemplateConfirmed={template => setScriptInput(genScriptTextFromTemplate(template))}
                     setOption={setOption}
                 />
             ) : (
                 <>
                     <Script
-                        value={state.rawInput.script}
-                        onChange={value => setState(draft => void (draft.rawInput.script = value))}
-                        onParsed={value => setState(draft => void (draft.parsed.script = value))}
+                        value={scriptInput}
+                        onChange={setScriptInput}
+                        onParsed={setScriptPartial}
                         option={option}
                         setOption={setOption}
                     />
-                    <Plot parsed={state.parsed} />
+                    <Plot template={templatePartial} script={scriptPartial} />
                 </>
             )}
         </Stack>

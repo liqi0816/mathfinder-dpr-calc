@@ -12,16 +12,16 @@ export class DiceAndNumberMode extends BaseMode {
                 { regex: /(?:)/, next: 'operator' },
             ],
             operator: [
-                { regex: /[+-]/, token: TokenType.operator, next: 'term' },
-                { regex: /(?=\S)/, token: TokenType.comment, next: 'comment' },
+                { regex: /[+-]/, token: TokenType.Operator, next: 'term' },
+                { regex: /(?=\S)/, token: TokenType.Comment, next: 'comment' },
                 { regex: /\n/, next: 'start' },
             ],
             term: [
-                { regex: /(\d*)(d\d+)/, token: [TokenType.numeric, TokenType.func], next: 'operator' },
-                { regex: /\d+/, token: TokenType.numeric, next: 'operator' },
+                { regex: /(\d*)(d\d+)/, token: [TokenType.Numeric, TokenType.Func], next: 'operator' },
+                { regex: /\d+/, token: TokenType.Numeric, next: 'operator' },
                 { regex: /\n/, next: 'start' },
             ],
-            comment: [{ regex: /.*/, token: TokenType.comment, next: 'start' }],
+            comment: [{ regex: /.*/, token: TokenType.Comment, next: 'start' }],
         });
     };
 

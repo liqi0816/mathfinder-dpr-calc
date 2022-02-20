@@ -1,13 +1,21 @@
-export type NestedHaystack<TTerminal, TKey extends string = string> = {
-    [key in TKey]: TTerminal | NestedHaystack<TTerminal>;
+export type ReplaceNestedType<Root, Prop> = {
+    [K in keyof Root]: Root[K] extends Record<string | number, unknown> ? ReplaceNestedType<Root[K], Prop> : Prop;
 };
 
-const isPrimitive = <TTerminal>(value: any): value is TTerminal => typeof value !== 'object';
-export function* deepEntries<TTerminal, TKey extends string>(
-    root: NestedHaystack<TTerminal, TKey>,
-    isTerminal: (value: any) => value is TTerminal = isPrimitive
-): Generator<[TKey, TTerminal, NestedHaystack<TTerminal, TKey>]> {
-    for (const [key, value] of Object.entries(root) as [TKey, TTerminal | NestedHaystack<TTerminal, TKey>][]) {
+export type OptionalNestedType<Root> = {
+    [K in keyof Root]?: Root[K] extends Record<string | number, unknown> ? OptionalNestedType<Root[K]> : Root[K];
+};
+
+export type NestedHaystack<Terminal, Key extends string = string> = {
+    [key in Key]: Terminal | NestedHaystack<Terminal>;
+};
+
+const isPrimitive = <Terminal>(value: any): value is Terminal => typeof value !== 'object';
+export function* deepEntries<Terminal, Key extends string>(
+    root: NestedHaystack<Terminal, Key>,
+    isTerminal: (value: any) => value is Terminal = isPrimitive
+): Generator<[Key, Terminal, NestedHaystack<Terminal, Key>]> {
+    for (const [key, value] of Object.entries(root) as [Key, Terminal | NestedHaystack<Terminal, Key>][]) {
         if (isTerminal(value)) {
             yield [key, value, root];
         } else {
@@ -16,12 +24,12 @@ export function* deepEntries<TTerminal, TKey extends string>(
     }
 }
 
-export function* deepPrefixEntries<TTerminal, TKey extends string>(
-    root: NestedHaystack<TTerminal, TKey>,
-    isTerminal: (value: any) => value is TTerminal = isPrimitive,
-    prefix: TKey[] = []
-): Generator<[ReadonlyArray<TKey>, TTerminal, NestedHaystack<TTerminal, TKey>]> {
-    for (const [key, value] of Object.entries(root) as [TKey, TTerminal | NestedHaystack<TTerminal, TKey>][]) {
+export function* deepPrefixEntries<Terminal, Key extends string>(
+    root: NestedHaystack<Terminal, Key>,
+    isTerminal: (value: any) => value is Terminal = isPrimitive,
+    prefix: Key[] = []
+): Generator<[readonly Key[], Terminal, NestedHaystack<Terminal, Key>]> {
+    for (const [key, value] of Object.entries(root) as [Key, Terminal | NestedHaystack<Terminal, Key>][]) {
         prefix.push(key);
         if (isTerminal(value)) {
             yield [prefix, value, root];
@@ -56,26 +64,49 @@ function* genMask(length: number): Generator<Readonly<Uint8Array>> {
     }
 }
 
-export function fuzzyGet<TTerminal, TKey extends string>(
-    root: NestedHaystack<TTerminal, TKey>,
-    key: TKey[],
-    isTerminal: (value: any) => value is TTerminal = isPrimitive
-): TTerminal | undefined {
+export function fuzzyGet<Terminal, Key extends string>(
+    root: NestedHaystack<Terminal, Key>,
+    key: Key[]
+): Terminal | NestedHaystack<Terminal, Key> | undefined;
+export function fuzzyGet<Terminal, Key extends string>(
+    root: NestedHaystack<Terminal, Key>,
+    key: Key[],
+    isTerminal: (value: any) => value is Terminal
+): Terminal | undefined;
+export function fuzzyGet<Terminal, Key extends string>(
+    root: NestedHaystack<Terminal, Key>,
+    key: Key[],
+    isTerminal?: (value: any) => value is Terminal
+) {
     /**
-     * example:
+     * example search sequence:
      * bab17.hit.bab 111
      * bab17.bab 101
      * hit.bab 011
-     * bab 001
+     * bab 001 <- match
      */
     for (const mask of genMask(key.length)) {
-        let current = root;
+        let current: Terminal | NestedHaystack<Terminal, Key> = root;
         for (const [i, k] of key.entries()) {
             if (current === undefined || current === null) break;
             if (!mask[i]) continue;
-            current = current[k] as NestedHaystack<TTerminal, TKey>;
+            current = (current as NestedHaystack<Terminal, Key>)[k];
         }
+        // if this path is not found, next
         if (current === undefined || current === null) continue;
-        if (isTerminal(current)) return current;
+        // if this path has the correct type, return
+        if (!isTerminal || isTerminal(current)) {
+            return current;
+        }
+        // if this path is another nested haystack, recurse one more time
+        if (typeof current === 'object') {
+            // this branch handles pattern like bab12.hit.bab17 -> bab17.hit
+            // not passing isTerminal because we don't want to recurse indefinitely
+            // this fuzzyGet will return from the `if (!isTerminal)` branch
+            const remainderMatch = fuzzyGet(current, key.slice(0, -1));
+            if (remainderMatch !== undefined && remainderMatch !== null && isTerminal(remainderMatch)) {
+                return remainderMatch;
+            }
+        }
     }
 }

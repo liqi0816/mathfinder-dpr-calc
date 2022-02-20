@@ -1,12 +1,13 @@
 import { Button, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import React from 'react';
+import { MathfinderPolynomial } from '../mathfinder/polynomial';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 
 interface Props {
-    value: CharacterState['rawInput']['critical hit'];
-    onChange: (value: CharacterState['rawInput']['critical hit']) => void;
-    onParsed: (parsed: CharacterState['parsed']['critical hit']) => void;
+    value: CharacterState['template']['input']['critical hit'];
+    onChange: (value: Props['value']) => void;
+    onParsed: (parsed: CharacterState['template']['partial']['critical hit']) => void;
 }
 
 export const CriticalHit: React.VFC<Props> = props => {
@@ -16,9 +17,9 @@ export const CriticalHit: React.VFC<Props> = props => {
     React.useEffect(
         () =>
             onParsedRef.current({
-                multiplier: Number(value.multiplier),
-                range: Number(value.range),
-                'confirmation bonus': Number(value['confirmation bonus']),
+                multiplier: new MathfinderPolynomial(Number(value.multiplier)),
+                range: new MathfinderPolynomial(Number(value.range)),
+                'confirmation bonus': new MathfinderPolynomial(Number(value['confirmation bonus'])),
             }),
         [value]
     );
@@ -55,10 +56,10 @@ export const CriticalHit: React.VFC<Props> = props => {
                 fullWidth
             />
             <Stack direction={'row'} gap={1}>
-                <Button variant={'outlined'} onClick={() => onChange({ ...value, 'confirmation bonus': '99' })}>
+                <Button variant={'outlined'} onClick={() => onChange({ ...value, 'confirmation bonus': '999' })}>
                     auto confirm
                 </Button>
-                <Button variant={'outlined'} onClick={() => onChange({ ...value, 'confirmation bonus': '-99' })}>
+                <Button variant={'outlined'} onClick={() => onChange({ ...value, 'confirmation bonus': '-999' })}>
                     enemy immune to crit
                 </Button>
             </Stack>
