@@ -14,6 +14,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
+import { useLocalStorage } from '@rehooks/local-storage';
 import yaml from 'js-yaml';
 import range from 'lodash/range';
 import startCase from 'lodash/startCase';
@@ -28,7 +29,8 @@ import { Column } from './components/Column';
 const toFixed8 = (value: number = 0) => value.toFixed(8).replace(/([.][0-9]*[1-9])0+$|[.]0*$/, '$1');
 
 const PLOT_STEPS = range(10, 61);
-const PLOT_AXIS_LABEL = 'armorClass';
+const PLOT_AXIS_LABEL = 'armorClass' as const;
+const PLOT_DATA_STUB = PLOT_STEPS.map((armorClass: number): DataPoint => ({ [PLOT_AXIS_LABEL]: armorClass }));
 const PLOT_CURRENT_LABEL = 'Currently Editing';
 type DataPoint = { [PLOT_AXIS_LABEL]: number } & { [_ in string]?: number };
 
@@ -96,7 +98,7 @@ const DebugDialog: React.FC<{ turn?: MathfinderTurn; data?: DataPoint[] }> = pro
 
 const labelToRandomColor = (label: string) => {
     let hash = 0;
-    for (var i = 0; i < label.length; i++) {
+    for (let i = 0; i < label.length; i++) {
         hash = label.charCodeAt(i) + ((hash << 5) - hash);
     }
     return `hsl(${hash % 360}, 40%, 50%)`;
@@ -137,14 +139,11 @@ export const Plot: React.VFC<Props> = props => {
         }
     }, [intermediate, template]);
     // generate data
-    const label = PLOT_CURRENT_LABEL;
-    const [existingData, setExistingData] = React.useState(() =>
-        PLOT_STEPS.map((armorClass: number): DataPoint => ({ armorClass }))
-    );
+    const [existingData, setExistingData, removeExistingData] = useLocalStorage('MathfinderPlotData', PLOT_DATA_STUB);
     const turnData = React.useMemo(() => turn && PLOT_STEPS.map(armorClass => turn.averageAgainstAC(armorClass)), [turn]);
     const data = React.useMemo(() => {
-        return turnData && existingData.map((value, i) => ({ ...value, [label]: turnData[i] }));
-    }, [existingData, turnData, label]);
+        return turnData && existingData.map((value, i) => ({ ...value, [PLOT_CURRENT_LABEL]: turnData[i] }));
+    }, [existingData, turnData]);
     const [turnLabel, setTurnLabel] = React.useState('');
     return (
         <Column width={{ xs: '100%', md: fullScreen ? '90vw' : 800 }} ref={ref}>
@@ -196,7 +195,7 @@ export const Plot: React.VFC<Props> = props => {
                     <Paper variant={'outlined'} sx={{ padding: 1 }}>
                         <Typography variant={'body1'}>Please give the current script a name so it stays in the plot.</Typography>
                     </Paper>
-                    <Stack direction={'column'} flexWrap={'nowrap'} alignItems={'start'} gap={1}>
+                    <Stack direction={'row'} flexWrap={'nowrap'} alignItems={'stretch'} gap={2}>
                         <TextField
                             label={'New Name'}
                             value={turnLabel}
@@ -205,12 +204,13 @@ export const Plot: React.VFC<Props> = props => {
                         <Button
                             variant={'contained'}
                             onClick={() =>
-                                setExistingData(existingData =>
-                                    existingData.map((value, i) => ({ ...value, [turnLabel]: turnData[i] }))
-                                )
+                                setExistingData(existingData.map((value, i) => ({ ...value, [turnLabel]: turnData[i] })))
                             }
                         >
                             Add
+                        </Button>
+                        <Button variant={'contained'} onClick={removeExistingData} color={'warning'}>
+                            Clear Plot
                         </Button>
                     </Stack>
                 </>

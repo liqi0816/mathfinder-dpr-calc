@@ -1,9 +1,8 @@
 import type { Ace } from 'ace-builds';
 import { TokenType } from '../editor/util';
 
-export class MathfinderPolynomialError extends Error {
-    name = MathfinderPolynomialError.name;
-}
+export class MathfinderPolynomialError extends Error {}
+MathfinderPolynomialError.prototype.name = MathfinderPolynomialError.name;
 
 const sign = (number: number): string => (number > 0 ? '+ ' : number < 0 ? '- ' : '');
 

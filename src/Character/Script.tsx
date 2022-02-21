@@ -38,15 +38,6 @@ export const Script: React.VFC<Props> = props => {
                 </Typography>
                 <ReadonlyEditor mode={YamlScriptMode.instance} value={'attack name:\n  hit chance: 17\n  damage: d3 + 5'} />
             </Paper>
-            <FormControlLabel
-                control={
-                    <Switch
-                        value={option.recalculateBAB}
-                        onChange={(_, recalculateBAB) => setOption(option => ({ ...option, recalculateBAB }))}
-                    />
-                }
-                label={'Reload on Base Attack Bonus Change'}
-            />
             <Stack direction={'row'} flexWrap={'nowrap'} alignItems={'center'} justifyContent={'space-between'}>
                 <FormControlLabel
                     control={
@@ -61,7 +52,6 @@ export const Script: React.VFC<Props> = props => {
                     back to template
                 </Link>
             </Stack>
-            <Divider />
             <Editor
                 mode={mode}
                 placeholder={'Please list actions like [name]: [value], or use the template generator.'}

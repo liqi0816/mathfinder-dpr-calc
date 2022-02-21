@@ -42,9 +42,8 @@ export function castMathfinderTemplate(partial: MathfinderTemplatePartial): Math
     };
 }
 
-export class MathfinderTurnError extends Error {
-    name = MathfinderTurnError.name;
-}
+export class MathfinderTurnError extends Error {}
+MathfinderTurnError.prototype.name = MathfinderTurnError.name;
 
 const isIterable = (value: any): value is Iterable<unknown> => typeof value?.[Symbol.iterator] === 'function';
 const isPolynomial = (value: any): value is MathfinderPolynomial => value instanceof MathfinderPolynomial;
@@ -110,7 +109,6 @@ export class MathfinderTurn {
 
     static fromHaystack(haystack: NestedHaystack<MathfinderPolynomial>) {
         const ret = new MathfinderTurn(haystack);
-
         for (const [name, value] of Object.entries(haystack)) {
             if ('hit chance' in value || 'damage' in value) {
                 const lastAction = ret.turn[ret.turn.length - 1];
@@ -121,11 +119,11 @@ export class MathfinderTurn {
                 }
             }
         }
-
         return ret;
     }
 
     *simulateAgainstAC(armorClass: number) {
+        /** @todo remove header dependency so each action can have their own stats */
         for (const action of this.turn) {
             const attackBonus = action['hit chance'].toAverage();
             // min = 2 because nat 1 always misses, max = 20 because nat 20 always hits
@@ -144,11 +142,14 @@ export class MathfinderTurn {
             const criticalHitChance = criticalThreatChance * chanceD20Geq(criticalConfirmMinimal);
             const normalHitChance =
                 chanceD20Between(normalHitMinimal, criticalThreatMinimal) + (criticalThreatChance - criticalHitChance);
-            const normalHitDamage = action.damage.toAverage();
+            // If penalties reduce the damage result to less than 1, a hit still deals 1 point of nonlethal damage.
+            const normalHitDamage = Math.max(0, action.damage.toAverage());
             const nonMultiplyingDamage = this.header.damage['extra bonus'].toAverage();
-            const criticalHitDamage =
+            const criticalHitDamage = Math.max(
+                normalHitDamage,
                 this.header['critical hit'].multiplier.toAverage() * (normalHitDamage - nonMultiplyingDamage) +
-                nonMultiplyingDamage;
+                    nonMultiplyingDamage
+            );
             const averageDamage = normalHitChance * normalHitDamage + criticalHitChance * criticalHitDamage;
             yield {
                 name: action.name,
