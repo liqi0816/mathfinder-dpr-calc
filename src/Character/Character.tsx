@@ -8,7 +8,7 @@ import {
     MathfinderTemplate,
     MathfinderTemplatePartial,
     MathfinderTurnIntermediate,
-} from '../mathfinder/squence';
+} from '../mathfinder/sequence';
 import { AttackBonus } from './AttackBonus';
 import { CriticalHit } from './CriticalHit';
 import { Damage } from './Damage';

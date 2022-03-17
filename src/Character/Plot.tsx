@@ -22,7 +22,7 @@ import React from 'react';
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ReadonlyEditor } from '../editor/Editor';
 import { YamlScriptMode } from '../editor/YamlScript';
-import { MathfinderTurn } from '../mathfinder/squence';
+import { MathfinderTurn } from '../mathfinder/sequence';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 

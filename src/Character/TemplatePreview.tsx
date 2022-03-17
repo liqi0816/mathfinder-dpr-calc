@@ -4,7 +4,7 @@ import compact from 'lodash/compact';
 import range from 'lodash/range';
 import React from 'react';
 import { MathfinderPolynomial } from '../mathfinder/polynomial';
-import { MathfinderTemplate } from '../mathfinder/squence';
+import { MathfinderTemplate } from '../mathfinder/sequence';
 import { CharacterState } from './Character';
 import { Column } from './components/Column';
 

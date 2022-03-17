@@ -5,7 +5,7 @@ import startCase from 'lodash/startCase';
 import React from 'react';
 import { Editor, ReadonlyEditor } from '../editor/Editor';
 import { collectIdentifiers, genYamlScriptVarialesMode, YamlScriptMode } from '../editor/YamlScript';
-import { MathfinderTurnIntermediate } from '../mathfinder/squence';
+import { MathfinderTurnIntermediate } from '../mathfinder/sequence';
 import { CharacterScreenOption, CharacterState } from './Character';
 import { Column } from './components/Column';
 
